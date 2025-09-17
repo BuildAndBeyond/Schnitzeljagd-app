@@ -1,0 +1,323 @@
+@import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@600&family=Fira+Sans:wght@400;600&display=swap');
+
+:root {
+    color-scheme: light;
+    font-family: "Fira Sans", "Segoe UI", Roboto, sans-serif;
+    --bg: #f4f5fb;
+    --accent: #ff6f61;
+    --accent-dark: #d64f47;
+    --primary: #353b6e;
+    --secondary: #5f6caf;
+    --surface: #ffffff;
+    --text: #1d1f2f;
+    --muted: #6b6f85;
+    --border: #d7d9eb;
+    line-height: 1.5;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+}
+
+h1, h2, h3 {
+    font-family: "Baloo 2", "Fira Sans", sans-serif;
+    margin-top: 0;
+}
+
+.app-header {
+    text-align: center;
+    padding: 3rem 1.5rem 1.5rem;
+    background: linear-gradient(135deg, #ffe4d6, #d8e2ff);
+    color: var(--primary);
+}
+
+.app-header h1 {
+    font-size: clamp(2rem, 4vw, 3rem);
+}
+
+.app-header p {
+    max-width: 720px;
+    margin: 0.5rem auto 0;
+}
+
+.app {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 2rem;
+    margin: 2rem auto;
+    padding: 0 1.5rem 3rem;
+    max-width: 1200px;
+}
+
+.editor, .preview {
+    background: var(--surface);
+    border-radius: 1.5rem;
+    padding: 2rem;
+    box-shadow: 0 25px 50px -15px rgba(46, 46, 112, 0.2);
+}
+
+.preview {
+    position: sticky;
+    top: 2rem;
+    align-self: start;
+}
+
+.riddle-form {
+    display: grid;
+    gap: 1.25rem;
+}
+
+.form-group label {
+    font-weight: 600;
+    display: block;
+    margin-bottom: 0.3rem;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border-radius: 0.75rem;
+    border: 1px solid var(--border);
+    font-size: 1rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--secondary);
+    box-shadow: 0 0 0 3px rgba(95, 108, 175, 0.2);
+}
+
+textarea {
+    resize: vertical;
+    min-height: 140px;
+}
+
+.form-row {
+    display: grid;
+    gap: 1rem;
+}
+
+@media (min-width: 640px) {
+    .form-row {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+.input-with-button {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.input-with-button button,
+.form-actions button,
+.hints button,
+.tasks button,
+.export button {
+    border: none;
+    background: var(--secondary);
+    color: white;
+    padding: 0.65rem 1rem;
+    border-radius: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.input-with-button button:hover,
+.form-actions button:hover,
+.hints button:hover,
+.tasks button:hover,
+.export button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 20px -10px rgba(95, 108, 175, 0.8);
+}
+
+.input-with-button button:active,
+.form-actions button:active,
+.hints button:active,
+.tasks button:active,
+.export button:active {
+    transform: translateY(0);
+    box-shadow: none;
+}
+
+button.primary {
+    background: var(--accent);
+}
+
+button.primary:hover {
+    background: var(--accent-dark);
+}
+
+button.link {
+    background: none;
+    color: var(--secondary);
+    padding: 0;
+    border-radius: 0;
+    font-weight: 500;
+    box-shadow: none;
+}
+
+button.link:hover {
+    text-decoration: underline;
+    transform: none;
+}
+
+.hint-list,
+.task-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.5rem;
+}
+
+.hint-list li,
+.task-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.65rem 0.85rem;
+    background: rgba(95, 108, 175, 0.08);
+    border-radius: 0.85rem;
+}
+
+.hint-list li span {
+    flex: 1;
+}
+
+.hint-list button,
+.task-item button {
+    background: none;
+    color: var(--accent);
+    font-size: 1.25rem;
+    width: 2.5rem;
+    height: 2.5rem;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    box-shadow: none;
+}
+
+.hint-list button:hover,
+.task-item button:hover {
+    background: rgba(255, 111, 97, 0.12);
+}
+
+.task-item input {
+    flex: 1;
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: 1rem;
+}
+
+.task-item input:focus {
+    outline: none;
+    border-bottom: 2px solid var(--secondary);
+}
+
+.preview-card {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.85));
+    border-radius: 1.5rem;
+    padding: 2rem;
+    border: 1px solid rgba(95, 108, 175, 0.15);
+    display: grid;
+    gap: 1.2rem;
+    min-height: 480px;
+}
+
+.preview-meta {
+    font-weight: 600;
+    color: var(--secondary);
+}
+
+.preview-story {
+    white-space: pre-wrap;
+}
+
+.preview-section h4 {
+    margin: 0 0 0.4rem;
+    color: var(--primary);
+}
+
+.preview-section ul {
+    margin: 0;
+    padding-left: 1.2rem;
+    display: grid;
+    gap: 0.25rem;
+}
+
+.preview-answer {
+    font-weight: 700;
+    color: var(--accent-dark);
+}
+
+.preview-reward {
+    font-style: italic;
+    color: var(--muted);
+}
+
+.form-actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.form-actions button[type="reset"] {
+    background: rgba(95, 108, 175, 0.12);
+    color: var(--secondary);
+}
+
+.export {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+}
+
+.export-hint {
+    flex-basis: 100%;
+    color: var(--muted);
+}
+
+.app-footer {
+    text-align: center;
+    padding: 2rem 1.5rem 3rem;
+    color: var(--muted);
+}
+
+@media print {
+    body {
+        background: white;
+        color: black;
+    }
+
+    .app-header,
+    .app-footer,
+    .editor,
+    .export,
+    button {
+        display: none;
+    }
+
+    .preview {
+        position: static;
+        box-shadow: none;
+    }
+
+    .preview-card {
+        border: none;
+    }
+}
