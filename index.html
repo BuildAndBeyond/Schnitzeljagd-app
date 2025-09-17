@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rätselbaukasten für Kinder</title>
+    <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+    <header class="app-header">
+        <h1>Rätselbaukasten für Kinder</h1>
+        <p>Stelle in wenigen Minuten spannende Rätsel für Schatzsuchen, Geburtstagsfeiern oder den Unterricht zusammen.</p>
+    </header>
+
+    <main class="app">
+        <section class="editor">
+            <h2>1. Rätsel gestalten</h2>
+            <form id="riddle-form" class="riddle-form" autocomplete="off">
+                <div class="form-group">
+                    <label for="theme">Thema</label>
+                    <div class="input-with-button">
+                        <select id="theme" name="theme">
+                            <option value="Abenteuer">Abenteuer</option>
+                            <option value="Natur">Natur</option>
+                            <option value="Weltraum">Weltraum</option>
+                            <option value="Magie">Magie</option>
+                            <option value="Detektiv">Detektiv</option>
+                        </select>
+                        <button type="button" data-action="suggest-theme">Zufällig</button>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="difficulty">Schwierigkeit</label>
+                        <select id="difficulty" name="difficulty">
+                            <option value="leicht">leicht (5-7 Jahre)</option>
+                            <option value="mittel">mittel (8-10 Jahre)</option>
+                            <option value="knifflig">knifflig (11+ Jahre)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="format">Rätseltyp</label>
+                        <select id="format" name="format">
+                            <option value="Reim">Reim</option>
+                            <option value="Logikrätsel">Logikrätsel</option>
+                            <option value="Suchauftrag">Suchauftrag</option>
+                            <option value="Rätselgeschichte">Rätselgeschichte</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="title">Titel</label>
+                    <input id="title" name="title" type="text" placeholder="z.B. Der verschwundene Schatz" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="story">Rätseltext</label>
+                    <textarea id="story" name="story" rows="5" placeholder="Beschreibe die Geschichte oder Frage deines Rätsels"></textarea>
+                    <button class="link" type="button" data-action="suggest-story">Textvorschlag einfügen</button>
+                </div>
+
+                <div class="form-group hints">
+                    <div class="label-row">
+                        <label for="hint-input">Hinweise</label>
+                        <button type="button" data-action="add-hint">Hinweis hinzufügen</button>
+                    </div>
+                    <div class="input-with-button">
+                        <input id="hint-input" type="text" placeholder="z.B. Folge den Fußspuren" />
+                        <button type="button" data-action="suggest-hint">Idee</button>
+                    </div>
+                    <ul id="hint-list" class="hint-list" aria-live="polite"></ul>
+                </div>
+
+                <div class="form-group">
+                    <label for="answer">Lösung</label>
+                    <input id="answer" name="answer" type="text" placeholder="z.B. Piratenflagge" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="reward">Belohnung/Station</label>
+                    <input id="reward" name="reward" type="text" placeholder="z.B. Nächster Hinweis liegt unter dem roten Kissen">
+                </div>
+
+                <div class="form-group tasks">
+                    <div class="label-row">
+                        <label>Mini-Aufgaben</label>
+                        <button type="button" data-action="add-task">Aufgabe hinzufügen</button>
+                    </div>
+                    <ul id="task-list" class="task-list" aria-live="polite"></ul>
+                </div>
+
+                <div class="form-actions">
+                    <button type="reset">Zurücksetzen</button>
+                    <button type="button" class="primary" data-action="generate">Rätsel zusammenstellen</button>
+                </div>
+            </form>
+        </section>
+
+        <section class="preview" aria-live="polite">
+            <h2>2. Vorschau &amp; Export</h2>
+            <article id="preview-card" class="preview-card">
+                <h3 id="preview-title">Wähle links deine Ideen…</h3>
+                <p id="preview-meta" class="preview-meta"></p>
+                <p id="preview-story" class="preview-story"></p>
+                <section id="preview-hints" class="preview-section"></section>
+                <section id="preview-tasks" class="preview-section"></section>
+                <p id="preview-answer" class="preview-answer"></p>
+                <p id="preview-reward" class="preview-reward"></p>
+            </article>
+
+            <div class="export">
+                <button type="button" data-action="copy">Text kopieren</button>
+                <button type="button" data-action="download">Als PDF speichern</button>
+                <p class="export-hint">Tipp: Drucke die Rätselkarte im Querformat aus oder verschicke sie digital.</p>
+            </div>
+        </section>
+    </main>
+
+    <footer class="app-footer">
+        <p>Erstellt mit Liebe für kleine Abenteurer:innen. Teile deine Ideen und erweitere die Rätsel beliebig!</p>
+    </footer>
+
+    <template id="task-template">
+        <li class="task-item">
+            <input type="text" placeholder="z.B. Zähle die goldenen Sterne" />
+            <button type="button" class="remove" aria-label="Aufgabe entfernen">×</button>
+        </li>
+    </template>
+
+    <script src="assets/app.js" defer></script>
+</body>
+</html>
