@@ -154,11 +154,6 @@
           </div>
         </div>
         <div class="box">
-          <h3>Taktziel (Minuten)</h3>
-          <div class="row"><input id="taktMin" type="number" min="1" max="150" value="150"> <span class="pill">Minuten (max. 150)</span></div>
-          <div class="v"><span id="taktSec">9000</span> s</div>
-        </div>
-        <div class="box">
           <h3>Gesamtzeit (Standard)</h3>
           <div class="v" id="sumStd">0,0 s</div>
           <div class="hint">= Normalzeit × (1+Zuschlag)</div>
@@ -173,6 +168,10 @@
       <details>
         <summary>REFA‑Einstellungen</summary>
         <div class="grid" style="grid-template-columns:repeat(4,1fr);gap:10px;margin-top:10px">
+          <div><label>Taktziel (Minuten)</label>
+            <div class="row" style="gap:6px;align-items:center"><input id="taktMin" type="number" min="1" value="150"> <span class="pill">Minuten</span></div>
+            <div class="hint"><span id="taktSec">9000</span> s</div>
+          </div>
           <div><label>Leistungsgrad (LG) %</label><input id="defaultLG" type="number" value="100" min="50" max="140"><div class="hint">Normalzeit = Istzeit × LG/100</div></div>
           <div><label>Zuschlag Personal %</label><input id="allowP" type="number" value="5" min="0" max="30"></div>
           <div><label>Zuschlag Erholung %</label><input id="allowE" type="number" value="4" min="0" max="30"></div>
@@ -660,7 +659,7 @@ function applyDefaultZeitart(op, zeitart){
 
 // Meta
 function renderMeta(){ $('#metaProject').value=state.meta.project||''; $('#metaWorkplace').value=state.meta.workplace||''; $('#metaObserver').value=state.meta.observer||''; $('#metaDate').value=state.meta.date||new Date().toISOString().substring(0,10); $('#taktMin').value=state.meta.taktMin||150; $('#taktSec').textContent=(state.meta.taktMin*60).toString(); renderActiveSelect(); applyActiveSelectVisibility(); }
-function updateMeta(){ state.meta.project=$('#metaProject').value.trim(); state.meta.workplace=$('#metaWorkplace').value.trim(); state.meta.observer=$('#metaObserver').value.trim(); state.meta.date=$('#metaDate').value; state.meta.taktMin=Math.min(150, Math.max(1, parseInt($('#taktMin').value||'150',10))); $('#taktSec').textContent=(state.meta.taktMin*60).toString(); save(); recalcTotals(); }
+function updateMeta(){ state.meta.project=$('#metaProject').value.trim(); state.meta.workplace=$('#metaWorkplace').value.trim(); state.meta.observer=$('#metaObserver').value.trim(); state.meta.date=$('#metaDate').value; const taktRaw=parseFloat(($('#taktMin').value||'150').replace(',','.')); state.meta.taktMin=Number.isFinite(taktRaw)&&taktRaw>0?taktRaw:1; $('#taktMin').value=state.meta.taktMin; $('#taktSec').textContent=(state.meta.taktMin*60).toString(); save(); recalcTotals(); }
 function renderActiveSelect(){ const sel=$('#activeOp'); const prev=state.activeOpId||''; const options=state.ops.map((o,i)=>{ const title=escapeHtml(o.title||o.code||'Vorgang'); const kindLabel=SCOPE_LABELS[normalizeKind(o.kind)]||SCOPE_LABELS.main; return `<option value="${o.id}" ${o.id===prev?'selected':''}>#${i+1} ${title} (${kindLabel})</option>`; }).join(''); sel.innerHTML='<option value="">— keiner —</option>'+options; }
 
 // Ops
