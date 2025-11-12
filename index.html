@@ -1,0 +1,1320 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>REFA Zeitanalyse – Vollversion (offline, helles UI)</title>
+  <style>
+    :root{--bg:#f7f9fc;--panel:#ffffff;--text:#0f172a;--muted:#5b6472;--border:#e2e8f0;--accent:#2563eb;--ok:#16a34a;--warn:#f59e0b;--danger:#ef4444;--chip:#eef2ff;--shadow:0 8px 22px rgba(15,23,42,.07);--header-offset:88px}
+    *{box-sizing:border-box}html,body{height:100%}body{margin:0;padding-top:88px;padding-top:var(--header-offset);background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,"Helvetica Neue",Arial}
+    header{position:fixed;top:0;left:0;right:0;z-index:40;background:rgba(255,255,255,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--border)}
+    .wrap{max-width:1240px;margin:0 auto;padding:14px}h1{margin:0;font-size:20px}
+    .grid{display:grid;gap:12px}@media(min-width:980px){.grid-2{grid-template-columns:1.15fr .85fr}}
+    .card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:14px;box-shadow:var(--shadow)}
+    label{font-size:12px;color:var(--muted);display:block;margin-bottom:6px}
+    input,select,textarea{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:#fff;color:var(--text)}
+    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .btn{appearance:none;cursor:pointer;border:1px solid var(--border);background:#fff;color:var(--text);padding:10px 14px;border-radius:12px;font-weight:600}
+    .btn:hover{border-color:#cbd5e1}.btn.primary{background:var(--accent);border-color:transparent;color:#fff}.btn.ok{background:var(--ok);border-color:transparent;color:#fff}.btn.warn{background:var(--warn);border-color:transparent;color:#0b1220}.btn.danger{background:var(--danger);border-color:transparent;color:#fff}
+    .btn.ghost{background:transparent;border-color:transparent;color:var(--accent);padding:6px 10px;font-size:12px;font-weight:500}
+    .btn.ghost:hover{background:rgba(37,99,235,.08);border-color:rgba(37,99,235,.2)}
+    .pill{background:var(--chip);color:#1e293b;border:1px solid #dbeafe;padding:4px 8px;border-radius:999px;font-size:12px}
+    .kpi{display:flex;gap:14px;flex-wrap:wrap}.kpi .box{background:#fff;border:1px solid var(--border);padding:12px 14px;border-radius:12px;min-width:150px}.kpi .box h3{margin:0 0 4px 0;font-size:12px;color:var(--muted)}.kpi .box .v{font-weight:700;font-size:18px}
+    .tag{font-size:11px;background:#f1f5ff;border:1px solid var(--border);border-radius:8px;padding:2px 6px;color:#1d4ed8}
+    .hint{font-size:12px;color:var(--muted)}.small{font-size:12px;color:var(--muted)}
+    .imgthumb{width:70px;height:70px;object-fit:cover;border-radius:8px;border:1px solid var(--border);cursor:pointer}.activeCard{outline:2px solid var(--accent)}
+    canvas{width:100%;height:320px;border:1px solid var(--border);border-radius:12px;background:#fff}
+    .section-title{font-weight:700}
+    .badge{display:inline-block;padding:2px 6px;border-radius:8px;border:1px solid var(--border);font-size:11px}
+    .help-steps{margin:8px 0 14px 20px;padding-left:18px}
+    .help-steps li{margin:0 0 6px 0}
+    .btn.dictate-active{background:var(--ok);border-color:transparent;color:#fff}
+    .time-list{display:flex;flex-direction:column;gap:4px;margin-top:4px}
+    .time-entry{display:flex;align-items:center;gap:8px;font-size:12px;flex-wrap:wrap}
+    .time-entry .time-duration{font-weight:600;min-width:80px;color:var(--text)}
+    .time-entry select{flex:1 1 200px;max-width:260px}
+    .time-entry select[disabled]{opacity:.6;background:#f8fafc;cursor:not-allowed}
+    .time-entry .time-note{flex:2 1 220px;min-width:180px;font-size:12px;padding:8px 10px}
+    .time-entry .badge{background:#f1f5ff;color:#1d4ed8;border-color:#dbeafe}
+    .stopwatch-card{position:sticky;top:100px;top:calc(var(--header-offset)+12px);z-index:9}
+    @media(max-width:979px){.stopwatch-card{position:static}}
+    #activeOpPanel{display:flex;flex-direction:column;gap:10px}
+    #activeOpPanel .tag{background:#dcfce7;border-color:#bbf7d0;color:#166534}
+    #activeOpPanel .panel-header{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+    .notes-area{width:100%;min-height:68px;font-size:13px;line-height:1.4}
+    #lapScopeWrap{display:flex;align-items:center;gap:10px;margin-top:8px;flex-wrap:wrap}
+    #lapScopeSelect{max-width:220px}
+    #imgPreview::backdrop{background:rgba(15,23,42,.7)}
+    #imgPreview{border:none;padding:0;background:transparent}
+    #imgPreviewContent{background:#fff;border-radius:16px;overflow:hidden;max-width:90vw;max-height:90vh;display:flex;flex-direction:column}
+    #imgPreviewContent img{display:block;width:100%;height:auto;max-height:80vh;object-fit:contain;background:#000}
+    #imgPreviewActions{display:flex;justify-content:flex-end;gap:10px;padding:12px;background:#fff}
+    #activeOpContainer{display:flex;flex-direction:column;gap:6px}
+    #activeOpContainer .active-select-header{display:flex;justify-content:space-between;align-items:center;gap:10px}
+    #activeOpContainer[data-visible="false"] .active-select-body{display:none}
+    .op-card{padding:0;overflow:hidden;margin-bottom:10px}
+    .op-card summary{display:grid;grid-template-columns:auto minmax(160px,1fr) minmax(90px,120px) repeat(3,auto) minmax(120px,auto) minmax(120px,auto);align-items:center;gap:12px;padding:14px;cursor:pointer;list-style:none}
+    .op-card summary::-webkit-details-marker{display:none}
+    .op-card summary .op-summary-title{font-weight:600;min-width:140px}
+    .op-card summary .op-summary-code{font-size:12px;color:var(--muted)}
+    .op-card summary .op-summary-pill{background:#f1f5f9;border-radius:999px;padding:4px 10px;font-size:12px;color:#0f172a}
+    .op-card summary .op-summary-zeitart{font-size:12px;color:var(--muted)}
+    .op-card summary .op-summary-kind{font-size:12px;color:#0f172a;font-weight:600}
+    .op-card[open]>summary{border-bottom:1px solid var(--border)}
+    .op-card .op-body{padding:14px;display:flex;flex-direction:column;gap:12px}
+    .op-card .op-body .row{align-items:flex-start}
+    .op-card .op-body .row.inline-actions{flex-direction:column;gap:6px;align-items:stretch}
+    .op-card.collapsed summary{opacity:.82}
+    @media(max-width:900px){.op-card summary{grid-template-columns:repeat(2,minmax(150px,1fr));row-gap:6px}}
+    @media(max-width:560px){.op-card summary{grid-template-columns:1fr}}
+    #snippetPanel.snippets-disabled{opacity:1;background:#f8fafc;border:1px dashed var(--border);display:flex;flex-direction:column;gap:10px;min-height:auto}
+    #snippetPanel.snippets-disabled .snippet-body{display:none}
+    #snippetPanel.snippets-disabled .snippet-buttons{display:none}
+    #snippetPanel.snippets-disabled .section-title{opacity:.88}
+    #snippetPanel.snippets-disabled .snippet-disabled-message{display:flex;background:#fff;border:1px solid var(--border);border-radius:12px;padding:12px;align-items:center;gap:12px}
+    #snippetPanel.snippets-disabled .snippet-disabled-message .hint{font-size:13px}
+    #snippetPanel.snippets-disabled .snippet-disabled-message .btn{margin-left:auto}
+    #snippetPanel.snippets-disabled .snippet-hint{display:none}
+    #snippetPanel .snippet-disabled-message{display:none;align-items:center;justify-content:space-between;gap:12px;margin-top:8px}
+    #snippetPanel.snippets-disabled .snippet-disabled-message{display:flex}
+    main[data-snippets="off"]{grid-template-columns:1fr;}
+    main[data-snippets="off"] #snippetPanel{grid-column:1 / -1;order:99}
+  </style>
+</head>
+<body>
+<header>
+  <div class="wrap row" style="justify-content:space-between;align-items:center">
+    <h1>REFA Zeitanalyse – lokal · offline</h1>
+    <div class="row">
+      <button class="btn" id="btnHelp">Hilfe/FAQ</button>
+      <button class="btn" id="btnKeys">Tastenkürzel</button>
+      <button class="btn" id="btnDictate" title="Aktuelles Feld diktieren">🎙️ Diktieren</button>
+      <button class="btn" id="btnLoad">Import JSON</button>
+      <button class="btn" id="btnSave">Export JSON</button>
+      <button class="btn" id="btnCSV">Export CSV</button>
+      <button class="btn" id="btnPrint">PDF/Print</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap grid grid-2" style="margin-top:12px">
+  <!-- LEFT -->
+  <section class="card">
+    <div class="grid" style="gap:10px">
+      <div class="row" style="justify-content:space-between;align-items:center">
+        <div class="row" style="gap:10px;align-items:center">
+          <div class="pill">Modus: <b>Manuelle REFA‑Studie</b></div>
+          <div class="hint">bis 2,5 h Takt · Kamera & Upload · PC & iPad</div>
+        </div>
+        <div class="row">
+          <button class="btn primary" id="btnNewOp" title="N">+ Hauptvorgang</button>
+          <button class="btn" id="btnNewSubOp" title="Shift+U" style="display:none">+ Untervorgang</button>
+          <button class="btn ok" id="btnFromSnippet" title="Shift+N">+ aus Textbaustein</button>
+        </div>
+      </div>
+
+      <div class="grid" style="grid-template-columns:repeat(5,1fr);gap:10px">
+        <div><label>Projekt/Auftrag</label><input id="metaProject" placeholder="z. B. T14R – Endmontage"></div>
+        <div><label>Arbeitsplatz</label><input id="metaWorkplace" placeholder="z. B. Taktplatz 2 – Schweißzelle"></div>
+        <div><label>Beobachter</label><input id="metaObserver" placeholder="Name"></div>
+        <div><label>Datum</label><input id="metaDate" type="date"></div>
+        <div id="activeOpContainer" data-visible="true">
+          <div class="active-select-header">
+            <label>Aktiver Vorgang</label>
+            <button class="btn ghost" id="btnToggleActive" type="button">Ausblenden</button>
+          </div>
+          <div class="active-select-body" id="activeOpBody">
+            <select id="activeOp"><option value="">— keiner —</option></select>
+            <div class="hint">Runden (<b>L</b>) buchen die laufende Zeit auf den zuletzt angelegten Vorgang. Untervorgänge lassen sich neben der Stoppuhr zuschalten.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="kpi">
+        <div class="box stopwatch-card" id="stopwatchCard">
+          <h3>Stoppuhr</h3>
+          <div class="v" id="chrono">00:00.0</div>
+          <div class="row" style="gap:6px">
+            <button class="btn" id="btnStart">Start</button>
+            <button class="btn" id="btnLap">Runde</button>
+            <button class="btn" id="btnStop">Stopp</button>
+            <button class="btn warn" id="btnReset">Reset</button>
+          </div>
+          <div class="hint" id="lapsHint">Keine Runden erfasst.</div>
+          <div id="lapScopeWrap">
+            <label style="display:flex;align-items:center;gap:8px;margin:0">
+              <input type="checkbox" id="toggleSubOps">
+              <span>Untervorgänge erfassen</span>
+            </label>
+            <select id="lapScopeSelect">
+              <option value="main">Neue Vorgänge als Hauptvorgang</option>
+              <option value="sub">Neue Vorgänge als Untervorgang</option>
+            </select>
+            <span class="hint" id="lapScopeHint">Schalte Untervorgänge ein, um beim Anlegen den Bereich für neue Vorgänge zu wählen.</span>
+          </div>
+        </div>
+        <div class="box">
+          <h3>Gesamtzeit (Standard)</h3>
+          <div class="v" id="sumStd">0,0 s</div>
+          <div class="hint">= Normalzeit × (1+Zuschlag)</div>
+        </div>
+        <div class="box">
+          <h3>Auslastung</h3>
+          <div class="v" id="util">0 %</div>
+          <div class="hint">Standardzeit / Taktziel</div>
+        </div>
+      </div>
+
+      <details>
+        <summary>REFA‑Einstellungen</summary>
+        <div class="grid" style="grid-template-columns:repeat(4,1fr);gap:10px;margin-top:10px">
+          <div><label>Taktziel (Minuten)</label>
+            <div class="row" style="gap:6px;align-items:center"><input id="taktMin" type="number" min="1" value="150"> <span class="pill">Minuten</span></div>
+            <div class="hint"><span id="taktSec">9000</span> s</div>
+          </div>
+          <div><label>Leistungsgrad (LG) %</label><input id="defaultLG" type="number" value="100" min="50" max="140"><div class="hint">Normalzeit = Istzeit × LG/100</div></div>
+          <div><label>Zuschlag Personal %</label><input id="allowP" type="number" value="5" min="0" max="30"></div>
+          <div><label>Zuschlag Erholung %</label><input id="allowE" type="number" value="4" min="0" max="30"></div>
+          <div><label>Zuschlag Sachlich %</label><input id="allowS" type="number" value="6" min="0" max="40"></div>
+        </div>
+        <div class="hint" style="margin-top:6px">Verteilzeiten (P/E/S) über Zuschläge – <b>nicht</b> als Störzeit stoppen.</div>
+      </details>
+    </div>
+  </section>
+
+  <!-- RIGHT: Textbausteine (4 Kategorien) -->
+  <aside class="card" id="snippetPanel">
+    <div class="row" style="justify-content:space-between;align-items:center">
+      <div class="section-title">Textbaustein‑Datenbank</div>
+      <div class="row" style="gap:12px;align-items:center">
+        <label class="row small" style="gap:6px;align-items:center"><input type="checkbox" id="toggleSnippets"> <span>Aktiv (Shift+T)</span></label>
+        <div class="row snippet-buttons"><button class="btn" id="btnAddSnippet">+ Baustein</button><button class="btn" id="btnResetSnippets">↺ Reset</button></div>
+      </div>
+    </div>
+    <div class="snippet-body">
+      <div class="row" style="gap:8px;margin:8px 0 12px 0">
+        <input id="snippetSearch" placeholder="Suchen… (F)">
+        <select id="snippetCat" title="Kategorie (K)">
+          <option value="">Alle</option>
+          <option>Schweißen</option>
+          <option>Montieren</option>
+          <option>Qualität</option>
+          <option>Dokumentation</option>
+        </select>
+      </div>
+      <div id="snippetList" style="max-height:520px;overflow:auto;border:1px solid var(--border);border-radius:12px;padding:8px"></div>
+      <p class="hint snippet-hint" style="margin-top:10px">Klick auf einen Baustein → legt Vorgang an, setzt ihn <b>aktiv</b> und fokussiert die Stoppuhr.</p>
+    </div>
+    <div class="snippet-disabled-message" id="snippetDisabledMessage">
+      <div class="hint" style="margin:0">Textbausteine sind ausgeblendet.</div>
+      <button class="btn" id="btnShowSnippets" type="button" title="Shift+T">Einblenden (Shift+T)</button>
+    </div>
+  </aside>
+
+  <!-- FULL WIDTH: Operations -->
+  <section class="card" style="grid-column:1 / -1" id="activeOpPanel">
+    <div class="hint">Kein Vorgang aktiv. Wähle oben einen Vorgang aus oder lege einen neuen an.</div>
+  </section>
+
+  <section class="card" style="grid-column:1 / -1">
+    <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:6px">
+      <div class="section-title">Vorgänge</div>
+      <div class="row">
+        <button class="btn" id="btnExpand">Alle öffnen</button>
+        <button class="btn" id="btnCollapse">Alle schließen</button>
+        <button class="btn warn" id="btnCheckZeitarten">Zeitarten prüfen</button>
+        <button class="btn" id="btnClearOps">Alle Vorgänge löschen</button>
+      </div>
+    </div>
+    <div id="ops"></div>
+  </section>
+
+  <!-- Dashboard -->
+  <section class="card" style="grid-column:1 / -1">
+    <div class="row" style="justify-content:space-between;align-items:center">
+      <div class="section-title">Dashboard – Ergebnisübersicht</div>
+      <div class="hint">Standardzeiten nach <b>Zeitart</b> & VA/NVA/NNVA</div>
+    </div>
+    <div class="grid" style="grid-template-columns:1fr 1fr; gap:12px">
+      <div><label>Std‑Zeit nach Zeitart (Balken)</label><canvas id="chartZeitart" width="600" height="320"></canvas></div>
+      <div><label>Verteilung VA/NVA/NNVA (Torte)</label><canvas id="chartVA" width="600" height="320"></canvas></div>
+    </div>
+    <div class="grid" style="grid-template-columns:repeat(4,1fr);gap:12px;margin-top:10px">
+      <div class="kpi box"><div><h3>Summe Standardzeit</h3><div class="v" id="kpiStd">0,0 s</div></div></div>
+      <div class="kpi box"><div><h3>Anzahl Vorgänge</h3><div class="v" id="kpiOps">0</div></div></div>
+      <div class="kpi box"><div><h3>Ø LG</h3><div class="v" id="kpiLG">100 %</div></div></div>
+      <div class="kpi box"><div><h3>Ausgeschlossene Zeit</h3><div class="v" id="kpiExcl">0,0 s</div></div></div>
+    </div>
+  </section>
+</main>
+
+<input type="file" id="fileInput" accept="application/json" style="display:none">
+
+<!-- Dialoge -->
+<dialog id="dlgHelp"><div class="card" style="border:none"><div class="section-title">Benutzerhandbuch &amp; Hilfe</div>
+  <p class="hint">Arbeitsablauf:</p>
+  <ol class="hint help-steps">
+    <li><b>Vorbereiten:</b> Projekt-, Arbeitsplatz- und Beobachterdaten setzen und optional Untervorgänge an der Stoppuhr zuschalten.</li>
+    <li><b>Zeit starten:</b> Mit <b>Start</b> bzw. <b>S</b> die Stoppuhr laufen lassen. Ein leerer Vorgang für den gewählten Bereich wird vorbereitet.</li>
+    <li><b>Vorgang beschreiben:</b> Titel, Code, Notizen und bei Bedarf Bilder im vorbereiteten Vorgang erfassen, solange die Zeit läuft.</li>
+    <li><b>Runde buchen:</b> Mit <b>Runde</b> bzw. <b>L</b> wird die seit dem letzten Schritt gemessene Dauer auf den aktuellen Vorgang gebucht; der nächste Platzhalter steht sofort bereit.</li>
+    <li><b>Weitere Vorgänge:</b> Wiederhole Beschreiben → Runde für Haupt- oder Untervorgänge, bis alle Tätigkeiten erfasst sind.</li>
+    <li><b>Zeitarten vergeben:</b> Nach Abschluss die Zeitarten im Vorgang oder pro Untertätigkeit wählen.</li>
+    <li><b>Kontrollieren:</b> Mit „Zeitarten prüfen“ sicherstellen, dass jeder Vorgang eine Zeitart erhält und direkt zum nächsten offenen Eintrag springen.</li>
+  </ol>
+  <p class="hint">Tipps &amp; Hinweise:</p>
+  <ul class="hint">
+    <li>Der aktive Vorgang lässt sich oben ein- oder ausblenden; nur der aktive Eintrag bleibt automatisch aufgeklappt.</li>
+    <li>Untervorgänge können neben der Stoppuhr zugeschaltet werden; ohne Untervorgänge werden alle Runden als Hauptvorgang geführt.</li>
+    <li>Vergib Zeitarten entweder global über die Vorgangs-Zeitart oder einzeln pro Zeitreihe.</li>
+    <li>Textbausteine lassen sich rechts ein- bzw. ausblenden, um Platz zu sparen.</li>
+    <li>Shortcuts: S Start/Stop · L Runde · R Reset · N Hauptvorgang · Shift+U Untervorgang · Shift+N Vorgang aus Textbaustein · Shift+T Textbausteine ein/aus · F Snippet‑Suche · K Kategorie · E Export JSON · C Export CSV · I Import · P Drucken.</li>
+    <li>Verteilzeiten via Zuschläge P/E/S – nicht als Störzeit buchen.</li>
+  </ul>
+  <div class="row" style="justify-content:flex-end"><button class="btn" id="closeHelp">OK</button></div>
+</div></dialog>
+<dialog id="dlgKeys"><div class="card" style="border:none"><div class="section-title">Tastenkürzel</div>
+  <ul class="hint"><li><b>S</b> Start/Stop</li><li><b>L</b> Runde</li><li><b>R</b> Reset</li><li><b>N</b> Neuer Hauptvorgang</li><li><b>Shift+U</b> Neuer Untervorgang</li><li><b>Shift+N</b> Vorgang aus Textbaustein</li><li><b>Shift+T</b> Textbausteine ein/aus</li><li><b>F</b> Suche Snippets</li><li><b>K</b> Kategorie</li><li><b>E</b> Export JSON</li><li><b>C</b> Export CSV</li><li><b>I</b> Import</li><li><b>P</b> Drucken</li></ul>
+  <div class="row" style="justify-content:flex-end"><button class="btn" id="closeKeys">OK</button></div>
+</div></dialog>
+
+<dialog id="imgPreview">
+  <div id="imgPreviewContent">
+    <img id="imgPreviewImage" alt="Bildvorschau">
+    <div id="imgPreviewActions">
+      <a class="btn" id="imgPreviewDownload" download>Download</a>
+      <button class="btn" id="closeImgPreview">Schließen</button>
+    </div>
+  </div>
+</dialog>
+
+<script>
+const $=s=>document.querySelector(s); const $$=s=>Array.from(document.querySelectorAll(s));
+const updateHeaderOffset=()=>{ const header=document.querySelector('header'); if(!header) return; const offset=header.offsetHeight; document.documentElement.style.setProperty('--header-offset', `${offset}px`); document.body.style.paddingTop=`${offset}px`; };
+window.addEventListener('resize', updateHeaderOffset);
+window.addEventListener('orientationchange', updateHeaderOffset);
+window.addEventListener('load', updateHeaderOffset);
+let headerObserver=null;
+const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
+let dictationRecognizer=null; let dictationTarget=null; let dictationActive=false; let lastDictationField=null; let lastDictationSelection=null;
+const DICTATION_PERMISSION_KEY='refa_dictation_permission';
+let dictationPermissionStatus=(()=>{ try{ return localStorage.getItem(DICTATION_PERMISSION_KEY)||'unknown'; }catch(e){ return 'unknown'; }})();
+let dictationPermissionPromise=null;
+const setDictationPermissionStatus=status=>{
+  dictationPermissionStatus=status;
+  try{ localStorage.setItem(DICTATION_PERMISSION_KEY,status); }catch(e){}
+};
+const fmt=s=>new Intl.NumberFormat('de-DE',{minimumFractionDigits:1,maximumFractionDigits:1}).format(s);
+const fmt0=s=>new Intl.NumberFormat('de-DE',{maximumFractionDigits:0}).format(s);
+const SCOPE_LABELS={main:'Hauptvorgang',sub:'Untervorgang'};
+const normalizeKind=value=>String(value||'').toLowerCase()==='sub'?'sub':'main';
+const normalizeScope=value=>normalizeKind(value);
+const escapeHtml=str=>String(str??'').replace(/[&<>"']/g,ch=>({
+  '&':'&amp;',
+  '<':'&lt;',
+  '>':'&gt;',
+  '"':'&quot;',
+  "'":'&#39;'
+}[ch]));
+const uid=()=>Math.random().toString(36).slice(2,9);
+const toDataURL=f=>new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(f)});
+// Zeitarten & Mapping zu VA/NVA
+const ZEITARTEN=['Hauptzeit (VA)','Rüstzeit','Nebentätigkeit (NVA)','Störung/Warten (NNVA)'];
+const Z_TO_VA={ 'Hauptzeit (VA)':'VA', 'Rüstzeit':'NVA', 'Nebentätigkeit (NVA)':'NVA', 'Störung/Warten (NNVA)':'NNVA' };
+const buildZeitartOptions=(selected='',{includeBlank=true}={})=>{
+  const opts=[];
+  const safeSelected=selected??'';
+  if(includeBlank){
+    opts.push(`<option value="" ${safeSelected===''?'selected':''}>— Zeitart wählen —</option>`);
+  }
+  opts.push(...ZEITARTEN.map(z=>`<option value="${z}" ${z===safeSelected?'selected':''}>${z}</option>`));
+  if(safeSelected && !ZEITARTEN.includes(safeSelected)){
+    opts.push(`<option value="${escapeHtml(safeSelected)}" selected>${escapeHtml(safeSelected)}</option>`);
+  }
+  return opts.join('');
+};
+
+const buildKindOptions=(selected='main',{allowSub=true}={})=>{
+  const safe=normalizeKind(selected);
+  return ['main','sub'].map(key=>{
+    const disabledAttr=!allowSub && key==='sub'?' disabled':'';
+    return `<option value="${key}" ${safe===key?'selected':''}${disabledAttr}>${SCOPE_LABELS[key]}</option>`;
+  }).join('');
+};
+
+const renderTimeEntries=(op,times=[])=>{
+  if(!times.length) return '<div class="hint">Keine Zeiten erfasst.</div>';
+  const lockedZeitart=(op.defaultZeitart||'').trim();
+  const includeBlank=!lockedZeitart;
+  const disabledAttr=lockedZeitart?' disabled':'';
+  return `<div class="time-list">${times.map((x,idx)=>{
+    const selectOptions=buildZeitartOptions(lockedZeitart||x.art||'',{includeBlank});
+    return `<div class="time-entry" data-time-idx="${idx}"><span class="badge">#${idx+1}</span><span class="time-duration">${fmt(x.t)} s</span><select class="time-zeitart" data-op="${op.id}" data-time-idx="${idx}"${disabledAttr}>${selectOptions}</select><input class="time-note" placeholder="Notiz" data-key="timeNote" data-op="${op.id}" data-time-idx="${idx}" value="${escapeHtml(x.note||'')}"></div>`;
+  }).join('')}</div>`;
+};
+
+// Snippets (vereinfachte 4 Kategorien; Mindestmenge >=100)
+const BASE_SW=['PSA prüfen','Schweißgerät einschalten','WPS prüfen','Kanten reinigen','Heftpunkte setzen','Kehlnaht schweißen (MAG)','Kehlnaht schweißen (WIG)','Stumpfnaht schweißen','Zwischenlage reinigen','Naht verschleifen','Spritzer entfernen','Brenner reinigen','Gasflasche wechseln','Naht visuell prüfen'];
+const BASE_MO=['Bauteile identifizieren','Material bereitstellen','Bauteil entnehmen','Baugruppe vormontieren','Schraube einsetzen','Drehmoment anziehen','Sicherung montieren','Kabelschutz verlegen','Schlauch verlegen','Leitung verschrauben','Abdeckung montieren','Werkzeug wechseln','Vorrichtung umrüsten'];
+const BASE_Q=['Sichtprüfung','Maßprüfung mit Lehre','Drehmomentprüfung','Funktionsprüfung mechanisch','Funktionsprüfung elektrisch','Prüfergebnis dokumentieren','Abweichung melden'];
+const BASE_D=['Arbeitsauftrag lesen','WPS einsehen','Checkliste ausfüllen','Fotodokumentation','Seriennummer erfassen','Rückmeldung buchen','Schichtübergabe protokollieren'];
+const DEFAULT_SNIPPETS=[...BASE_SW.map(t=>({cat:'Schweißen',text:t})),...BASE_MO.map(t=>({cat:'Montieren',text:t})),...BASE_Q.map(t=>({cat:'Qualität',text:t})),...BASE_D.map(t=>({cat:'Dokumentation',text:t}))];
+while(DEFAULT_SNIPPETS.length<120){DEFAULT_SNIPPETS.push({cat:'Montieren',text:'Allgemeine Montagehandlung ausführen'});} 
+
+// State
+const state={ meta:{project:'',workplace:'',observer:'',date:'',taktMin:150}, settings:{LG:100,allow:{P:5,E:4,S:6}}, snippets:DEFAULT_SNIPPETS, ops:[], activeOpId:'', lastCreatedOpId:'', laps:[], running:false, startTs:0, elapsed:0, lastLapTs:0, useSubOps:false, lapScope:'main', snippetsEnabled:true, showActiveSelect:true };
+try{const x=localStorage.getItem('refa_v6'); if(x) Object.assign(state, JSON.parse(x));}catch(e){}
+try{const s=localStorage.getItem('refa_snips_v6'); if(s) state.snippets=JSON.parse(s);}catch(e){}
+if(state.showActiveSelect===undefined) state.showActiveSelect=true;
+const save=()=>localStorage.setItem('refa_v6', JSON.stringify(state));
+const saveSnips=()=>localStorage.setItem('refa_snips_v6', JSON.stringify(state.snippets));
+const dictationBtn=$('#btnDictate');
+const toggleSubOps=$('#toggleSubOps');
+const lapScopeSelect=$('#lapScopeSelect');
+const lapScopeHint=$('#lapScopeHint');
+const imgPreviewDialog=$('#imgPreview');
+const imgPreviewImage=$('#imgPreviewImage');
+const imgPreviewDownload=$('#imgPreviewDownload');
+const closeImgPreviewBtn=$('#closeImgPreview');
+const mainLayout=document.querySelector('main');
+const snippetPanel=$('#snippetPanel');
+const snippetBody=snippetPanel?snippetPanel.querySelector('.snippet-body'):null;
+const snippetDisabledMessage=$('#snippetDisabledMessage');
+const activeOpContainer=$('#activeOpContainer');
+const activeOpBody=$('#activeOpBody');
+const toggleActiveBtn=$('#btnToggleActive');
+const toggleSnippetsInput=$('#toggleSnippets');
+const showSnippetsBtn=$('#btnShowSnippets');
+const applySnippetLayout=()=>{ if(!mainLayout) return; mainLayout.dataset.snippets=state.snippetsEnabled!==false?'on':'off'; };
+const applyActiveSelectVisibility=()=>{
+  if(!activeOpContainer) return;
+  const visible=state.showActiveSelect!==false;
+  activeOpContainer.dataset.visible=visible?'true':'false';
+  if(toggleActiveBtn){
+    toggleActiveBtn.textContent=visible?'Ausblenden':'Aktiven Vorgang anzeigen';
+    toggleActiveBtn.setAttribute('aria-expanded', visible?'true':'false');
+  }
+  if(activeOpBody){
+    activeOpBody.setAttribute('aria-hidden', visible?'false':'true');
+  }
+};
+const isDictationField=el=>{ if(!el) return false; if(el.tagName==='TEXTAREA') return true; if(el.tagName!=='INPUT') return false; const type=(el.type||'text').toLowerCase(); return ['text','search','email','url','tel','number'].includes(type); };
+const resetDictationState=()=>{ dictationActive=false; if(dictationBtn) dictationBtn.classList.remove('dictate-active'); if(dictationRecognizer){ dictationRecognizer.onend=null; dictationRecognizer.onresult=null; dictationRecognizer.onerror=null; } dictationRecognizer=null; dictationTarget=null; lastDictationSelection=null; };
+const stopDictation=()=>{ dictationActive=false; if(dictationRecognizer){ try{ dictationRecognizer.stop(); }catch(e){} } else { resetDictationState(); } };
+const ensureDictationPermission=()=>{
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia) return Promise.resolve(true);
+  if(dictationPermissionStatus==='granted') return Promise.resolve(true);
+  if(dictationPermissionStatus==='denied') return Promise.reject(new Error('Mikrofonzugriff wurde verweigert.'));
+  if(dictationPermissionPromise) return dictationPermissionPromise;
+  dictationPermissionPromise=navigator.mediaDevices.getUserMedia({audio:true}).then(stream=>{
+    setDictationPermissionStatus('granted');
+    if(stream&&typeof stream.getTracks==='function'){ stream.getTracks().forEach(track=>track.stop()); }
+    return true;
+  }).catch(err=>{
+    if(err && (err.name==='NotAllowedError'||err.name==='SecurityError')){
+      setDictationPermissionStatus('denied');
+    }
+    throw err;
+  }).finally(()=>{ dictationPermissionPromise=null; });
+  return dictationPermissionPromise;
+};
+const appendDictationText=text=>{
+  if(!dictationTarget) return;
+  const field=dictationTarget;
+  const placeholderTitle=(field.dataset&&field.dataset.placeholderTitle||'').trim();
+  let current=field.value||'';
+  if(placeholderTitle && current.trim()===placeholderTitle){
+    current='';
+  }
+  let nextValue=current;
+  let caretPos=current.length;
+  const canSelect=field===document.activeElement && typeof field.selectionStart==='number' && typeof field.selectionEnd==='number';
+  if(canSelect){
+    const start=field.selectionStart;
+    const end=field.selectionEnd;
+    if(end>start){
+      nextValue=current.slice(0,start)+text+current.slice(end);
+      caretPos=start+text.length;
+    } else if(start===current.length){
+      const needsSpace=current && !/\s$/.test(current);
+      const insert=(needsSpace?' ':'')+text;
+      nextValue=current+insert;
+      caretPos=nextValue.length;
+    } else {
+      nextValue=current.slice(0,start)+text+current.slice(end);
+      caretPos=start+text.length;
+    }
+  } else if(!current){
+    nextValue=text;
+    caretPos=nextValue.length;
+  } else {
+    const needsSpace=!/\s$/.test(current);
+    nextValue=current+(needsSpace?' ':'')+text;
+    caretPos=nextValue.length;
+  }
+  field.value=nextValue;
+  const ev=new Event('input',{bubbles:true});
+  field.dispatchEvent(ev);
+  if(typeof field.setSelectionRange==='function'){
+    field.setSelectionRange(caretPos, caretPos);
+  }
+};
+const resolveDictationField=()=>{
+  const candidates=[document.activeElement, dictationTarget, lastDictationField];
+  for(const el of candidates){
+    if(el&&document.contains(el)&&isDictationField(el)) return el;
+  }
+  return null;
+};
+const startDictation=()=>{
+  if(!SpeechRecognition){ alert('Spracherkennung wird von diesem Browser nicht unterstützt.'); return; }
+  if(dictationActive){ stopDictation(); return; }
+  const field=resolveDictationField();
+  if(!field){ alert('Bitte fokussiere zuerst ein Textfeld zum Diktieren.'); return; }
+  const beginRecognition=()=>{
+    dictationTarget=field;
+    lastDictationField=field;
+    if(field!==document.activeElement){ field.focus({preventScroll:false}); }
+    if(lastDictationSelection && typeof field.setSelectionRange==='function'){
+      const {start,end}=lastDictationSelection;
+      try{ field.setSelectionRange(start,end); }
+      catch(e){}
+    }
+    lastDictationSelection=null;
+    dictationRecognizer=new SpeechRecognition();
+    dictationRecognizer.lang='de-DE';
+    dictationRecognizer.interimResults=true;
+    dictationRecognizer.continuous=true;
+    dictationActive=true;
+    dictationBtn&&dictationBtn.classList.add('dictate-active');
+    dictationRecognizer.onstart=()=>{ setDictationPermissionStatus('granted'); };
+    dictationRecognizer.onresult=e=>{
+      for(let i=e.resultIndex;i<e.results.length;i++){
+        const result=e.results[i];
+        const transcript=result[0].transcript.trim();
+        if(!transcript) continue;
+        if(result.isFinal){ appendDictationText(transcript); }
+      }
+    };
+    dictationRecognizer.onerror=e=>{
+      if(e.error==='no-speech' || e.error==='aborted') return;
+      if(e.error==='not-allowed' || e.error==='service-not-allowed'){
+        setDictationPermissionStatus('denied');
+        alert('Zugriff auf das Mikrofon wurde blockiert. Bitte erlaube den Zugriff in den Browser-Einstellungen.');
+      } else {
+        alert('Spracherkennung konnte nicht gestartet werden: '+e.error);
+      }
+      stopDictation();
+    };
+    dictationRecognizer.onend=()=>{
+      if(dictationActive){
+        setTimeout(()=>{
+          if(!dictationActive) return;
+          try{ dictationRecognizer.start(); }
+          catch(err){ stopDictation(); }
+        },250);
+      } else {
+        resetDictationState();
+      }
+    };
+    try{
+      dictationRecognizer.start();
+    }catch(err){
+      alert('Spracherkennung konnte nicht gestartet werden.');
+      resetDictationState();
+    }
+  };
+  const handlePermissionError=err=>{
+    let message='Spracherkennung konnte nicht gestartet werden.';
+    if(err){
+      const name=err.name||'';
+      if(name==='NotAllowedError' || name==='SecurityError'){
+        setDictationPermissionStatus('denied');
+        message='Zugriff auf das Mikrofon wurde abgelehnt. Bitte erlaube den Zugriff im Browser.';
+      } else if(name==='NotFoundError' || name==='DevicesNotFoundError'){
+        message='Kein Mikrofon gefunden. Bitte schließe ein Mikrofon an.';
+      } else if(err.message){
+        message+='\n'+err.message;
+      }
+    }
+    alert(message);
+    resetDictationState();
+  };
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){
+    beginRecognition();
+    return;
+  }
+  ensureDictationPermission().then(beginRecognition).catch(handlePermissionError);
+};
+if(dictationBtn){ if(!SpeechRecognition){ dictationBtn.style.display='none'; }
+  dictationBtn.addEventListener('pointerdown',()=>{
+    const active=document.activeElement;
+    if(isDictationField(active)){
+      lastDictationField=active;
+      if(typeof active.selectionStart==='number' && typeof active.selectionEnd==='number'){
+        lastDictationSelection={start:active.selectionStart,end:active.selectionEnd};
+      } else {
+        lastDictationSelection=null;
+      }
+    } else {
+      lastDictationSelection=null;
+    }
+  });
+  dictationBtn.addEventListener('click',startDictation);
+}
+if(navigator.permissions&&navigator.permissions.query){
+  try{
+    navigator.permissions.query({name:'microphone'}).then(status=>{
+      const mapState=state=> state==='granted'?'granted':(state==='denied'?'denied':'unknown');
+      setDictationPermissionStatus(mapState(status.state));
+      status.onchange=()=>{ setDictationPermissionStatus(mapState(status.state)); };
+    }).catch(()=>{});
+  }catch(e){}
+}
+document.addEventListener('focusin',e=>{ if(isDictationField(e.target)){ lastDictationField=e.target; lastDictationSelection=null; if(dictationActive) dictationTarget=e.target; } });
+window.addEventListener('beforeunload',stopDictation);
+
+// Helpers
+const asTimeObj=arr=>arr.map(v=>{
+  if(typeof v==='number') return {t:v,art:'',note:'',scope:'main'};
+  const tObj={...v};
+  tObj.t=typeof tObj.t==='number'?tObj.t:parseFloat(tObj.t)||0;
+  tObj.art=tObj.art==null?'':String(tObj.art);
+  tObj.note=tObj.note==null?'':String(tObj.note);
+  tObj.scope=normalizeScope(tObj.scope);
+  return tObj;
+});
+function normalizeOp(op){
+  const normalized={...op};
+  if(!normalized.id) normalized.id=uid();
+  normalized.code=normalized.code||'';
+  normalized.title=normalized.title||'';
+  normalized.notes=normalized.notes||'';
+  normalized.images=Array.isArray(normalized.images)?normalized.images.slice():[];
+  if(normalized.defaultZeitart==null){
+    normalized.defaultZeitart='';
+  }
+  const allow=normalized.allow&&typeof normalized.allow==='object'?normalized.allow:{};
+  normalized.allow={P:state.settings.allow.P,E:state.settings.allow.E,S:state.settings.allow.S,...allow};
+  const lgNum=parseInt(normalized.LG,10);
+  normalized.LG=!Number.isNaN(lgNum)?lgNum:state.settings.LG;
+  const cyclesNum=parseInt(normalized.cycles,10);
+  normalized.cycles=Math.max(1,!Number.isNaN(cyclesNum)?cyclesNum:1);
+  normalized.times=asTimeObj(Array.isArray(normalized.times)?normalized.times:[]);
+  let derivedKind=normalizeKind(normalized.kind);
+  if(derivedKind==='main' && normalized.scope){
+    derivedKind=normalizeKind(normalized.scope);
+  }
+  if(derivedKind==='main'){
+    const scoped=normalized.times.find(entry=>normalizeKind(entry.scope)==='sub');
+    if(scoped){
+      derivedKind='sub';
+    }
+  }
+  normalized.kind=derivedKind;
+  normalized.times.forEach(entry=>{ entry.scope=normalizeKind(entry.scope||normalized.kind); });
+  if((normalized.defaultZeitart||'').trim()){
+    applyDefaultZeitart(normalized, normalized.defaultZeitart);
+  }
+  if(normalized.collapsed===undefined){
+    normalized.collapsed=true;
+  } else {
+    normalized.collapsed=!!normalized.collapsed;
+  }
+  return normalized;
+}
+
+function normalizeState(){
+  state.useSubOps=!!state.useSubOps;
+  state.lapScope=normalizeScope(state.lapScope);
+  if(!state.useSubOps){
+    state.lapScope='main';
+  }
+  state.snippetsEnabled=state.snippetsEnabled!==false;
+  state.showActiveSelect=state.showActiveSelect!==false;
+  if(typeof state.lastCreatedOpId!=='string'){
+    state.lastCreatedOpId='';
+  }
+  if(!Array.isArray(state.laps)){
+    state.laps=[];
+  }
+  state.ops=(state.ops||[]).map(o=>normalizeOp(o));
+  if(state.activeOpId && !state.ops.some(o=>o.id===state.activeOpId)){
+    state.activeOpId=state.ops.length?state.ops[0].id:'';
+  }
+  if(state.lastCreatedOpId && !state.ops.some(o=>o.id===state.lastCreatedOpId)){
+    state.lastCreatedOpId=state.ops.length?state.ops[state.ops.length-1].id:'';
+  }
+}
+
+normalizeState();
+const calcOp=(op)=>{ const times=asTimeObj(op.times||[]); const sumMeasured=times.reduce((a,b)=>a+(b.t||0),0); const cycles=Math.max(1,op.cycles||1); const ist=sumMeasured/cycles; const LG=(op.LG??state.settings.LG)/100; const normal=ist*LG; const P=(op.allow?.P??state.settings.allow.P)/100; const E=(op.allow?.E??state.settings.allow.E)/100; const S=(op.allow?.S??state.settings.allow.S)/100; const std=normal*(1+P+E+S); return {ist,normal,std,times}; };
+
+function applyDefaultZeitart(op, zeitart){
+  const trimmed=(zeitart||'').trim();
+  if(!trimmed) return;
+  op.times=asTimeObj(op.times||[]);
+  op.times.forEach(entry=>{ entry.art=trimmed; });
+}
+
+// Meta
+function renderMeta(){ $('#metaProject').value=state.meta.project||''; $('#metaWorkplace').value=state.meta.workplace||''; $('#metaObserver').value=state.meta.observer||''; $('#metaDate').value=state.meta.date||new Date().toISOString().substring(0,10); $('#taktMin').value=state.meta.taktMin||150; $('#taktSec').textContent=(state.meta.taktMin*60).toString(); renderActiveSelect(); applyActiveSelectVisibility(); }
+function updateMeta(){ state.meta.project=$('#metaProject').value.trim(); state.meta.workplace=$('#metaWorkplace').value.trim(); state.meta.observer=$('#metaObserver').value.trim(); state.meta.date=$('#metaDate').value; const taktRaw=parseFloat(($('#taktMin').value||'150').replace(',','.')); state.meta.taktMin=Number.isFinite(taktRaw)&&taktRaw>0?taktRaw:1; $('#taktMin').value=state.meta.taktMin; $('#taktSec').textContent=(state.meta.taktMin*60).toString(); save(); recalcTotals(); }
+function renderActiveSelect(){ const sel=$('#activeOp'); const prev=state.activeOpId||''; const options=state.ops.map((o,i)=>{ const title=escapeHtml(o.title||o.code||'Vorgang'); const kindLabel=SCOPE_LABELS[normalizeKind(o.kind)]||SCOPE_LABELS.main; return `<option value="${o.id}" ${o.id===prev?'selected':''}>#${i+1} ${title} (${kindLabel})</option>`; }).join(''); sel.innerHTML='<option value="">— keiner —</option>'+options; }
+
+// Ops
+function addOp(partial={}){
+  const op=normalizeOp({
+    id:uid(),
+    code:'',
+    title:'',
+    notes:'',
+    LG:state.settings.LG,
+    allow:{...state.settings.allow},
+    cycles:1,
+    times:[],
+    images:[],
+    defaultZeitart:'',
+    collapsed:partial.collapsed!==undefined?partial.collapsed:true,
+    kind:normalizeKind(partial.kind||(state.useSubOps && state.lapScope==='sub'?'sub':'main')),
+    ...partial
+  });
+  state.ops.push(op);
+  state.lastCreatedOpId=op.id;
+  setActiveOp(op.id,{expand:true});
+  save();
+  renderOps();
+  renderActiveOpPanel();
+  focusOpTitle(op.id);
+  return op;
+}
+function opById(id){ return state.ops.find(o=>o.id===id); }
+function setActiveOp(id,{expand=true,collapseOthers=true}={}){
+  const newId=id||'';
+  state.activeOpId=newId;
+  if(!collapseOthers){
+    if(expand && newId){
+      const active=opById(newId);
+      if(active){
+        active.collapsed=false;
+      }
+    }
+    return;
+  }
+  state.ops.forEach(op=>{
+    if(op.id===newId){
+      op.collapsed=!expand;
+    } else {
+      op.collapsed=true;
+    }
+  });
+}
+if(state.activeOpId){
+  setActiveOp(state.activeOpId,{expand:true,collapseOthers:false});
+}
+function delOp(id){
+  state.ops=state.ops.filter(o=>o.id!==id);
+  if(state.lastCreatedOpId===id){
+    state.lastCreatedOpId=state.ops.length?state.ops[state.ops.length-1].id:'';
+  }
+  const nextActive=state.activeOpId===id?'':state.activeOpId;
+  setActiveOp(nextActive,{expand:!!nextActive});
+  save();
+  renderOps();
+  renderActiveOpPanel();
+}
+function clearAllOps(){
+  if(!state.ops.length){
+    setActiveOp('',{expand:false});
+    state.lastCreatedOpId='';
+    renderOps();
+    renderActiveOpPanel();
+    return;
+  }
+  if(!confirm('Alle Vorgänge löschen?')) return;
+  state.ops=[];
+  setActiveOp('',{expand:false});
+  state.lastCreatedOpId='';
+  save();
+  renderOps();
+  renderActiveOpPanel();
+}
+
+const ensureOpExpanded=id=>{
+  const detail=document.querySelector(`#ops details[data-op-card="${id}"]`);
+  if(detail && !detail.open){
+    detail.open=true;
+    detail.classList.remove('collapsed');
+  }
+};
+
+function focusOpTitle(id){ requestAnimationFrame(()=>{ let input=document.querySelector(`#activeOpPanel input[data-op="${id}"][data-key="title"]`); if(!input){ ensureOpExpanded(id); input=document.querySelector(`#ops input[data-op="${id}"][data-key="title"]`); } if(input){ input.focus({preventScroll:false}); input.select(); input.scrollIntoView({block:'center',behavior:'smooth'}); } }); }
+
+function focusTimeEntry(id, idx){
+  requestAnimationFrame(()=>{
+    let target=document.querySelector(`#activeOpPanel .time-note[data-op="${id}"][data-time-idx="${idx}"]`);
+    if(!target){
+      ensureOpExpanded(id);
+      target=document.querySelector(`#ops .time-note[data-op="${id}"][data-time-idx="${idx}"]`);
+    }
+    if(target){
+      target.focus({preventScroll:false});
+      if('select' in target){ target.select(); }
+      else if('setSelectionRange' in target){ target.setSelectionRange(0,target.value.length); }
+      target.scrollIntoView({block:'center',behavior:'smooth'});
+    }
+  });
+}
+
+function focusZeitartSelect(id, idx){
+  requestAnimationFrame(()=>{
+    let target=document.querySelector(`#activeOpPanel .time-zeitart[data-op="${id}"][data-time-idx="${idx}"]`);
+    if(!target){
+      ensureOpExpanded(id);
+      target=document.querySelector(`#ops .time-zeitart[data-op="${id}"][data-time-idx="${idx}"]`);
+    }
+    if(target){
+      target.focus({preventScroll:false});
+      target.scrollIntoView({block:'center',behavior:'smooth'});
+    }
+  });
+}
+
+function collectZeitartIssues(){
+  const issues=[];
+  state.ops.forEach(op=>{
+    const times=asTimeObj(op.times||[]);
+    if(!times.length) return;
+    const missingIdx=times.findIndex(entry=>!(entry.art||'').trim());
+    if(missingIdx>=0){
+      issues.push({op,index:missingIdx});
+    }
+  });
+  return issues;
+}
+
+function checkZeitarten(){
+  if(!state.ops.length){
+    alert('Keine Vorgänge vorhanden.');
+    return;
+  }
+  const issues=collectZeitartIssues();
+  const hintEl=$('#lapsHint');
+  if(!issues.length){
+    if(hintEl){ hintEl.textContent='Zeitarten geprüft – alle Vorgänge vollständig.'; }
+    return;
+  }
+  const {op,index}=issues[0];
+  const issueCount=issues.length;
+  const summaryCount=issueCount===1?'einem Vorgang':`${issueCount} Vorgängen`;
+  const labels=issues.map(({op:issueOp})=>{
+    const pos=state.ops.indexOf(issueOp);
+    const title=(issueOp.title||issueOp.code||'Vorgang').trim()||'Vorgang';
+    return `#${pos+1} ${title}`;
+  });
+  setActiveOp(op.id,{expand:true});
+  renderOps();
+  renderActiveOpPanel({preserveFocus:false});
+  requestAnimationFrame(()=>focusZeitartSelect(op.id, index));
+  if(hintEl){ hintEl.textContent=`Zeitarten fehlen in ${summaryCount}.`; }
+  alert(`Es fehlen Zeitarten in ${summaryCount}:
+${labels.join('\n')}`);
+}
+
+const placeholderTitleForKind=kind=> kind==='sub'?'Neuer Untervorgang':'Neuer Hauptvorgang';
+const defaultKindForNewOps=()=> normalizeKind(state.useSubOps && state.lapScope==='sub'?'sub':'main');
+function ensureEditablePlaceholder(preferredKind){
+  const targetKind=normalizeKind(preferredKind||defaultKindForNewOps());
+  const lastOp=state.lastCreatedOpId?opById(state.lastCreatedOpId):null;
+  if(lastOp && (!Array.isArray(lastOp.times)||lastOp.times.length===0)){
+    lastOp.kind=targetKind;
+    state.lastCreatedOpId=lastOp.id;
+    setActiveOp(lastOp.id,{expand:true});
+    renderOps();
+    renderActiveOpPanel({preserveFocus:false});
+    ensureOpExpanded(lastOp.id);
+    focusOpTitle(lastOp.id);
+    return lastOp;
+  }
+  return addOp({title:placeholderTitleForKind(targetKind), kind:targetKind, collapsed:false});
+}
+
+function latestOpForBooking(){
+  let op=null;
+  if(state.lastCreatedOpId){
+    op=opById(state.lastCreatedOpId);
+  }
+  if(!op && state.activeOpId){
+    op=opById(state.activeOpId);
+  }
+  if(!op && state.ops.length){
+    op=state.ops[state.ops.length-1];
+  }
+  return op||null;
+}
+
+function appendDurationToOp(op, duration){
+  op.times=asTimeObj(op.times||[]);
+  const entry={t:duration, art:'', note:'', scope:normalizeKind(op.kind)};
+  const defaultArt=(op.defaultZeitart||'').trim();
+  if(defaultArt){
+    entry.art=defaultArt;
+  }
+  op.times.push(entry);
+  if(defaultArt){
+    applyDefaultZeitart(op, defaultArt);
+  }
+  return op.times.length-1;
+}
+
+function assignDurationToLatest(duration,{reason='lap'}={}){
+  if(!(duration>0)){
+    $('#lapsHint').textContent=reason==='stop'?'Stopp: Keine neue Zeit erfasst.':'Runde ohne Laufzeit.';
+    return null;
+  }
+  let op=latestOpForBooking();
+  if(!op){
+    op=ensureEditablePlaceholder();
+  }
+  if(!op){
+    $('#lapsHint').textContent=`${reason==='stop'?'Stopp':'Runde'} ${fmt(duration)} s – bitte zuerst einen Vorgang anlegen.`;
+    return null;
+  }
+  state.lastCreatedOpId=op.id;
+  setActiveOp(op.id,{expand:true});
+  const index=appendDurationToOp(op, duration);
+  const listIndex=Math.max(0,state.ops.indexOf(op));
+  const scopeLabel=SCOPE_LABELS[normalizeKind(op.kind)]||SCOPE_LABELS.main;
+  const baseMessage=`${reason==='stop'?'Stopp':'Runde'} ${fmt(duration)} s → ${scopeLabel} #${listIndex+1}`;
+  renderOps();
+  renderActiveOpPanel({preserveFocus:false});
+  const shouldPrepareNext=reason!=='stop' && state.running;
+  if(shouldPrepareNext){
+    const placeholder=ensureEditablePlaceholder();
+    const nextLabel=SCOPE_LABELS[normalizeKind(placeholder.kind)]||SCOPE_LABELS.main;
+    $('#lapsHint').textContent=`${baseMessage}. ${nextLabel} vorbereitet.`;
+  } else {
+    focusTimeEntry(op.id, index);
+    $('#lapsHint').textContent=baseMessage;
+  }
+  return {op,index};
+}
+
+function captureElapsedDuration(now,{reason='lap'}={}){
+  const anchor=state.lastLapTs||state.startTs;
+  if(!anchor){
+    $('#lapsHint').textContent=reason==='stop'?'Stopp: Keine laufende Messung.':'Keine laufende Messung.';
+    return null;
+  }
+  let duration=(now-anchor)/1000;
+  duration=Math.round(duration*10)/10;
+  return assignDurationToLatest(duration,{reason});
+}
+
+function updateSubModeControls(){
+  if(toggleSubOps){
+    toggleSubOps.checked=!!state.useSubOps;
+  }
+  if(!state.useSubOps){
+    state.lapScope='main';
+  }
+  if(lapScopeSelect){
+    const value=state.useSubOps && state.lapScope==='sub'?'sub':'main';
+    lapScopeSelect.value=value;
+    lapScopeSelect.style.display=state.useSubOps?'':'none';
+    lapScopeSelect.disabled=!state.useSubOps;
+  }
+  if(lapScopeHint){
+    lapScopeHint.textContent=state.useSubOps
+      ?'Wähle den Standardbereich für neu angelegte Vorgänge.'
+      :'Schalte Untervorgänge ein, um neue Vorgänge optional als Untervorgang anzulegen.';
+  }
+  const newSubBtn=$('#btnNewSubOp');
+  if(newSubBtn){
+    newSubBtn.style.display=state.useSubOps?'':'none';
+    newSubBtn.disabled=!state.useSubOps;
+  }
+  document.querySelectorAll('select[data-key="kind"]').forEach(sel=>{
+    if(state.useSubOps){
+      sel.disabled=false;
+      sel.querySelectorAll('option[value="sub"]').forEach(opt=>opt.disabled=false);
+    } else {
+      sel.disabled=false;
+      sel.querySelectorAll('option[value="sub"]').forEach(opt=>opt.disabled=true);
+    }
+  });
+}
+
+const updateSnippetAvailability=()=>{
+  const enabled=state.snippetsEnabled!==false;
+  if(toggleSnippetsInput) toggleSnippetsInput.checked=enabled;
+  if(snippetPanel) snippetPanel.classList.toggle('snippets-disabled', !enabled);
+  if(snippetDisabledMessage) snippetDisabledMessage.setAttribute('aria-hidden', enabled?'true':'false');
+  if(showSnippetsBtn){
+    showSnippetsBtn.disabled=enabled;
+    showSnippetsBtn.hidden=enabled;
+    showSnippetsBtn.setAttribute('aria-hidden', enabled?'true':'false');
+  }
+  const active=document.activeElement;
+  if(!enabled && snippetBody && active && snippetBody.contains(active) && typeof active.blur==='function'){
+    active.blur();
+  }
+  const fromSnippetBtn=$('#btnFromSnippet');
+  if(fromSnippetBtn){
+    fromSnippetBtn.disabled=!enabled;
+    fromSnippetBtn.style.display=enabled?'':'none';
+  }
+  applySnippetLayout();
+};
+
+function showImagePreview(src){
+  if(!src) return;
+  if(imgPreviewDialog && typeof imgPreviewDialog.showModal==='function'){
+    if(imgPreviewImage) imgPreviewImage.src=src;
+    if(imgPreviewDownload){ imgPreviewDownload.href=src; imgPreviewDownload.download='vorgang-bild.jpg'; }
+    try{ imgPreviewDialog.showModal(); }
+    catch(err){ closeImagePreview(); window.open(src,'_blank'); }
+  } else {
+    window.open(src,'_blank');
+  }
+}
+
+function closeImagePreview(){
+  if(imgPreviewImage) imgPreviewImage.src='';
+  if(imgPreviewDownload) imgPreviewDownload.removeAttribute('href');
+  if(imgPreviewDialog && imgPreviewDialog.open){ imgPreviewDialog.close(); }
+}
+
+function opCard(op,i){
+  const {ist,normal,std,times}=calcOp(op);
+  const imgHtml=(op.images||[]).map((src,idx)=>`<img class="imgthumb" src="${src}" alt="img${idx}">`).join('');
+  const zeitartSel=`<select data-op="${op.id}" data-key="opZeitart" style="max-width:220px">${buildZeitartOptions(op.defaultZeitart||'')}</select>`;
+  const lockedZeitart=(op.defaultZeitart||'').trim();
+  const placeholderTitle=placeholderTitleForKind(normalizeKind(op.kind));
+  const openAttr=op.collapsed?'':' open';
+  const collapsedClass=op.collapsed?' collapsed':'';
+  const summaryZeitart=escapeHtml(lockedZeitart||'—');
+  const summaryTitle=escapeHtml(op.title||'Beschreibung hinzufügen');
+  const summaryCode=escapeHtml(op.code||'—');
+  const kindLabel=SCOPE_LABELS[normalizeKind(op.kind)]||SCOPE_LABELS.main;
+  const cardClass=state.activeOpId===op.id?'activeCard ':'';
+  return `<details class="card op-card ${cardClass}${collapsedClass}" data-op-card="${op.id}"${openAttr}>
+    <summary class="op-summary">
+      <span class="tag">#${i+1}</span>
+      <span class="op-summary-title">${summaryTitle}</span>
+      <span class="op-summary-code">${summaryCode}</span>
+      <span class="op-summary-pill" data-role="ist" data-prefix="Ø ">Ø ${fmt(ist)} s</span>
+      <span class="op-summary-pill" data-role="normal" data-prefix="N ">N ${fmt(normal)} s</span>
+      <span class="op-summary-pill" data-role="std" data-prefix="Std ">Std ${fmt(std)} s</span>
+      <span class="op-summary-zeitart">Zeitart: ${summaryZeitart}</span>
+      <span class="op-summary-kind">${kindLabel}</span>
+    </summary>
+    <div class="op-body">
+      <div class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
+        <input value="${escapeHtml(op.code||'')}" placeholder="Vorgangscode" style="max-width:160px" data-op="${op.id}" data-key="code">
+        <input value="${escapeHtml(op.title||'')}" placeholder="Beschreibung" data-op="${op.id}" data-key="title" data-placeholder-title="${escapeHtml(placeholderTitle)}">
+        <button class="btn" data-op="${op.id}" data-action="active">Aktiv setzen</button>
+      </div>
+      <div>
+        <label>Vorgang – Notiz</label>
+        <textarea class="notes-area" placeholder="Zusätzliche Beschreibung oder Hinweise" data-op="${op.id}" data-key="notes">${escapeHtml(op.notes||'')}</textarea>
+      </div>
+      <div class="row" style="gap:10px;flex-wrap:wrap">
+        <div><label>Bereich</label><select data-op="${op.id}" data-key="kind">${buildKindOptions(op.kind,{allowSub:state.useSubOps})}</select></div>
+        <div><label>LG %</label><input type="number" min="50" max="140" value="${op.LG}" style="width:110px" data-op="${op.id}" data-key="LG"></div>
+        <div><label>Zuschläge P/E/S %</label><div class="row"><input type="number" min="0" max="40" value="${op.allow.P}" style="width:90px" data-op="${op.id}" data-key="allowP"><input type="number" min="0" max="40" value="${op.allow.E}" style="width:90px" data-op="${op.id}" data-key="allowE"><input type="number" min="0" max="40" value="${op.allow.S}" style="width:90px" data-op="${op.id}" data-key="allowS"></div></div>
+        <div><label>Zyklen</label><input type="number" min="1" value="${op.cycles||1}" style="width:100px" data-op="${op.id}" data-key="cycles"></div>
+        <div><label>Runden‑Zeitart (Default)</label>${zeitartSel}<div class="hint" style="margin-top:4px">${lockedZeitart?'Zeitart gilt für alle Zeiten in diesem Vorgang.':'Wähle hier, falls alle Zeiten gemeinsam zugeordnet werden sollen.'}</div></div>
+        <div><label>Istzeit Ø</label><div class="pill" data-role="ist">${fmt(ist)} s</div></div>
+        <div><label>Normalzeit</label><div class="pill" data-role="normal">${fmt(normal)} s</div></div>
+        <div><label>Standardzeit</label><div class="pill" data-role="std" style="background:#ecfdf5;border-color:#bbf7d0;color:#065f46">${fmt(std)} s</div></div>
+      </div>
+      <div class="row" style="gap:12px;flex-wrap:wrap">
+        <div style="flex:1 1 280px">
+          <label>Zeiten</label>
+          ${renderTimeEntries(op,times)}
+        </div>
+        <div class="row inline-actions">
+          <button class="btn danger" data-op="${op.id}" data-action="delete">Vorgang löschen</button>
+          <button class="btn danger" data-op="${op.id}" data-action="deleteAll">Alle Vorgänge löschen</button>
+        </div>
+      </div>
+      <div>
+        <label>Bild(e)</label>
+        <div class="row" style="gap:6px;flex-wrap:wrap">${imgHtml||'<span class="hint">—</span>'}</div>
+        <div class="row" style="gap:6px;margin-top:6px"><input type="file" accept="image/*" capture="environment" data-op="${op.id}" class="imgInput"><button class="btn" data-op="${op.id}" data-action="clearImg">Bilder leeren</button></div>
+      </div>
+    </div>
+  </details>`;
+}
+
+function renderActiveOpPanel(options={}){
+  const panel=$('#activeOpPanel');
+  if(!panel) return;
+  updateSubModeControls();
+  const preserveFocus=options.preserveFocus!==undefined?options.preserveFocus:true;
+  let focusInfo=null;
+  if(preserveFocus){
+    const active=document.activeElement;
+    if(active&&panel.contains(active)){
+      focusInfo={
+        key:active.dataset.key||'',
+        timeIdx:active.dataset.timeIdx,
+        selectionStart:typeof active.selectionStart==='number'?active.selectionStart:null,
+        selectionEnd:typeof active.selectionEnd==='number'?active.selectionEnd:null
+      };
+    }
+  }
+  const op=opById(state.activeOpId);
+  if(!op){
+    panel.innerHTML='<div class="hint">Kein Vorgang aktiv. Wähle oben einen Vorgang aus oder lege einen neuen an.</div>';
+    return;
+  }
+  op.allow=op.allow||{...state.settings.allow};
+  const index=Math.max(0,state.ops.indexOf(op));
+  const {ist,normal,std,times}=calcOp(op);
+  const imgHtml=(op.images||[]).map((src,idx)=>`<img class="imgthumb" src="${src}" alt="img${idx}">`).join('');
+  const zeitartSel=`<select data-op="${op.id}" data-key="opZeitart">${buildZeitartOptions(op.defaultZeitart||'')}</select>`;
+  const lockedZeitart=(op.defaultZeitart||'').trim();
+  const placeholderTitle=placeholderTitleForKind(normalizeKind(op.kind));
+  panel.innerHTML=`<div class="panel-header"><span class="tag">Aktiver Vorgang #${index+1}</span></div>
+  <div class="row" style="gap:8px;flex-wrap:wrap">
+    <input value="${escapeHtml(op.code||'')}" placeholder="Vorgangscode" style="max-width:160px" data-op="${op.id}" data-key="code">
+    <input value="${escapeHtml(op.title||'')}" placeholder="Beschreibung" data-op="${op.id}" data-key="title" data-placeholder-title="${escapeHtml(placeholderTitle)}">
+  </div>
+  <div>
+    <label>Vorgang – Notiz</label>
+    <textarea class="notes-area" placeholder="Zusätzliche Beschreibung oder Hinweise" data-op="${op.id}" data-key="notes">${escapeHtml(op.notes||'')}</textarea>
+  </div>
+  <div class="row" style="gap:10px;flex-wrap:wrap">
+    <div><label>Bereich</label><select data-op="${op.id}" data-key="kind">${buildKindOptions(op.kind,{allowSub:state.useSubOps})}</select></div>
+    <div><label>LG %</label><input type="number" min="50" max="140" value="${op.LG}" style="width:110px" data-op="${op.id}" data-key="LG"></div>
+    <div><label>Zyklen</label><input type="number" min="1" value="${op.cycles||1}" style="width:100px" data-op="${op.id}" data-key="cycles"></div>
+    <div><label>Runden‑Zeitart (Default)</label>${zeitartSel}<div class="hint" style="margin-top:4px">${lockedZeitart?'Zeitart gilt für alle Zeiten in diesem Vorgang.':'Wähle hier, falls alle Zeiten gemeinsam zugeordnet werden sollen.'}</div></div>
+    <div><label>Istzeit Ø</label><div class="pill" data-role="ist" data-op="${op.id}">${fmt(ist)} s</div></div>
+    <div><label>Normalzeit</label><div class="pill" data-role="normal" data-op="${op.id}">${fmt(normal)} s</div></div>
+    <div><label>Standardzeit</label><div class="pill" data-role="std" data-op="${op.id}" style="background:#ecfdf5;border-color:#bbf7d0;color:#065f46">${fmt(std)} s</div></div>
+  </div>
+  <div class="row" style="gap:12px;align-items:flex-start;flex-wrap:wrap">
+    <div style="flex:1 1 280px">
+      <label>Zeiten</label>
+    ${renderTimeEntries(op,times)}
+    </div>
+    <div class="row" style="flex-direction:column;gap:6px">
+      <button class="btn danger" data-op="${op.id}" data-action="delete">Vorgang löschen</button>
+      <button class="btn danger" data-op="${op.id}" data-action="deleteAll">Alle Vorgänge löschen</button>
+    </div>
+  </div>
+  <div>
+    <label>Bild(e)</label>
+    <div class="row" style="gap:6px;flex-wrap:wrap">${imgHtml||'<span class="hint">—</span>'}</div>
+    <div class="row" style="gap:6px;margin-top:6px"><input type="file" accept="image/*" capture="environment" data-op="${op.id}" class="imgInput"><button class="btn" data-op="${op.id}" data-action="clearImg">Bilder leeren</button></div>
+  </div>`;
+  updateSubModeControls();
+  if(preserveFocus&&focusInfo){
+    let selector=`[data-op="${op.id}"]`;
+    if(focusInfo.key) selector+=`[data-key="${focusInfo.key}"]`;
+    if(focusInfo.timeIdx!==undefined&&focusInfo.timeIdx!=='') selector+=`[data-time-idx="${focusInfo.timeIdx}"]`;
+    const newEl=panel.querySelector(selector);
+    if(newEl){
+      newEl.focus({preventScroll:true});
+      if(focusInfo.selectionStart!=null&&'setSelectionRange' in newEl){
+        newEl.setSelectionRange(focusInfo.selectionStart,focusInfo.selectionEnd);
+      }
+      if(dictationActive&&dictationTarget&&dictationTarget.dataset.op===op.id){
+        dictationTarget=newEl;
+        lastDictationField=newEl;
+      }
+    }
+  }
+}
+
+function renderOps(){ const c=$('#ops'); if(!c) return;
+  let dictationInfo=null;
+  if(dictationTarget&&c.contains(dictationTarget)){
+    dictationInfo={opId:dictationTarget.dataset.op||'', key:dictationTarget.dataset.key||'', timeIdx:dictationTarget.dataset.timeIdx||'', selectionStart:typeof dictationTarget.selectionStart==='number'?dictationTarget.selectionStart:null, selectionEnd:typeof dictationTarget.selectionEnd==='number'?dictationTarget.selectionEnd:null};
+  }
+  c.innerHTML=state.ops.map((o,i)=>opCard(o,i)).join('');
+  const detailNodes=c.querySelectorAll('details[data-op-card]');
+  detailNodes.forEach(node=>{ node.classList.toggle('collapsed', !node.open); node.addEventListener('toggle', onOpToggle); });
+  if(dictationInfo&&dictationInfo.opId){ let selector=`[data-op="${dictationInfo.opId}"]`; if(dictationInfo.key) selector+=`[data-key="${dictationInfo.key}"]`; if(dictationInfo.timeIdx!==''&&dictationInfo.timeIdx!==undefined) selector+=`[data-time-idx="${dictationInfo.timeIdx}"]`; const newTarget=c.querySelector(selector); if(newTarget){ dictationTarget=newTarget; lastDictationField=newTarget; if(dictationActive&&dictationInfo.selectionStart!=null&&'setSelectionRange' in newTarget){ newTarget.setSelectionRange(dictationInfo.selectionStart,dictationInfo.selectionEnd); } } else if(dictationActive){ stopDictation(); } }
+  recalcTotals();
+  renderActiveSelect();
+  updateSubModeControls();
+  save(); }
+
+const onOpToggle=e=>{
+  const detail=e.currentTarget;
+  const id=detail?.dataset?.opCard;
+  if(!id) return;
+  const op=opById(id);
+  if(!op) return;
+  op.collapsed=!detail.open;
+  detail.classList.toggle('collapsed', op.collapsed);
+  save();
+};
+
+function updateOpMetrics(op){ const info=calcOp(op); const applyText=(elements,value)=>{ elements.forEach(el=>{ const prefix=el.dataset.prefix||''; el.textContent=`${prefix}${fmt(value)} s`; }); }; const card=document.querySelector(`#ops [data-op-card="${op.id}"]`); if(card){ applyText(card.querySelectorAll('[data-role="ist"]'), info.ist); applyText(card.querySelectorAll('[data-role="normal"]'), info.normal); applyText(card.querySelectorAll('[data-role="std"]'), info.std); }
+  const panel=document.querySelector('#activeOpPanel');
+  if(panel){ applyText(panel.querySelectorAll(`[data-role="ist"][data-op="${op.id}"]`), info.ist); applyText(panel.querySelectorAll(`[data-role="normal"][data-op="${op.id}"]`), info.normal); applyText(panel.querySelectorAll(`[data-role="std"][data-op="${op.id}"]`), info.std); }
+}
+
+const ensureAllow=op=>{ op.allow=op.allow||{P:state.settings.allow.P,E:state.settings.allow.E,S:state.settings.allow.S}; return op.allow; };
+const syncOpFieldToList=(opId,key,value)=>{ const target=document.querySelector(`#ops [data-op="${opId}"][data-key="${key}"]`); if(target&&target.value!==value) target.value=value; };
+const syncOpFieldToPanel=(opId,key,value)=>{ const target=document.querySelector(`#activeOpPanel [data-op="${opId}"][data-key="${key}"]`); if(target&&target.value!==value) target.value=value; };
+const syncTimeNotes=(opId,idx,value,source)=>{
+  const selectors=[`#ops .time-note[data-op="${opId}"][data-time-idx="${idx}"]`,`#activeOpPanel .time-note[data-op="${opId}"][data-time-idx="${idx}"]`];
+  selectors.forEach(sel=>{
+    document.querySelectorAll(sel).forEach(el=>{
+      if(source&&el===source) return;
+      if(el.value!==value) el.value=value;
+    });
+  });
+};
+
+function handleOpInput(e){ const el=e.target; if(el.classList.contains('time-note')){ const op=opById(el.dataset.op); if(!op) return; ensureAllow(op); const idx=parseInt(el.dataset.timeIdx,10); if(Number.isNaN(idx)) return; op.times=asTimeObj(op.times||[]); if(op.times[idx]){ op.times[idx].note=el.value; save(); syncTimeNotes(op.id, idx, el.value, el); } return; } const id=el.dataset.op; if(!id) return; const op=opById(id); if(!op) return; const key=el.dataset.key; if(!key) return; ensureAllow(op); if(key==='code'){ op.code=el.value; } else if(key==='title'){ op.title=el.value; } else if(key==='notes'){ op.notes=el.value; } else if(key==='LG'){ let val=parseInt(el.value||`${state.settings.LG}`,10); if(Number.isNaN(val)) val=state.settings.LG; val=Math.max(50, Math.min(140,val)); op.LG=val; el.value=op.LG; } else if(key==='cycles'){ let val=parseInt(el.value||'1',10); if(Number.isNaN(val)||val<1) val=1; op.cycles=val; el.value=op.cycles; } else if(key==='allowP'){ let val=parseInt(el.value||'0',10); if(Number.isNaN(val)||val<0) val=0; op.allow.P=val; el.value=op.allow.P; } else if(key==='allowE'){ let val=parseInt(el.value||'0',10); if(Number.isNaN(val)||val<0) val=0; op.allow.E=val; el.value=op.allow.E; } else if(key==='allowS'){ let val=parseInt(el.value||'0',10); if(Number.isNaN(val)||val<0) val=0; op.allow.S=val; el.value=op.allow.S; } else { return; } save(); if(key!=='notes'){ updateOpMetrics(op); recalcTotals(); } if(el.closest('#activeOpPanel')){ syncOpFieldToList(id,key,el.value); } else { syncOpFieldToPanel(id,key,el.value); } if(key==='notes'){ syncOpFieldToList(id,key,el.value); syncOpFieldToPanel(id,key,el.value); }
+}
+
+async function handleOpChange(e){ const el=e.target; if(el.classList.contains('time-zeitart')){ if(el.disabled) return; const op=opById(el.dataset.op); if(!op) return; ensureAllow(op); const idx=parseInt(el.dataset.timeIdx,10); if(Number.isNaN(idx)) return; op.times=asTimeObj(op.times||[]); if(op.times[idx]){ op.times[idx].art=el.value; save(); renderOps(); renderActiveOpPanel({preserveFocus:true}); } return; } if(el.classList.contains('imgInput')){ const op=opById(el.dataset.op); if(!op) return; const file=el.files[0]; if(!file) return; const url=await toDataURL(file); const img=new Image(); img.onload=()=>{ const maxW=1024,maxH=1024; let {width:w,height:h}=img; const sc=Math.min(1, maxW/w, maxH/h); const c=document.createElement('canvas'); c.width=Math.round(w*sc); c.height=Math.round(h*sc); const ctx=c.getContext('2d'); ctx.drawImage(img,0,0,c.width,c.height); const data=c.toDataURL('image/jpeg',0.8); op.images=op.images||[]; op.images.push(data); save(); renderOps(); renderActiveOpPanel({preserveFocus:true}); focusOpTitle(op.id); }; img.src=url; el.value=''; return; } const id=el.dataset.op; if(!id) return; const op=opById(id); if(!op) return; ensureAllow(op); const key=el.dataset.key; if(key==='opZeitart'){ op.defaultZeitart=el.value; if((op.defaultZeitart||'').trim()){ applyDefaultZeitart(op, op.defaultZeitart); } save(); renderOps(); renderActiveOpPanel({preserveFocus:true}); return; } if(key==='kind'){ const nextKind=normalizeKind(el.value); op.kind=nextKind; op.times=asTimeObj(op.times||[]); op.times.forEach(entry=>{ entry.scope=normalizeKind(entry.scope||nextKind); }); save(); renderOps(); renderActiveOpPanel({preserveFocus:true}); return; }}
+function handleOpClick(e){
+  const btn=e.target.closest('button');
+  if(!btn) return;
+  const id=btn.dataset.op||'';
+  const action=btn.dataset.action;
+  if(!action) return;
+  if(action==='deleteAll'){ clearAllOps(); return; }
+  if(action==='delete'){ if(id && confirm('Vorgang löschen?')) delOp(id); return; }
+  const op=id&&opById(id);
+  if(!op) return;
+  ensureAllow(op);
+  if(action==='clearImg'){
+    op.images=[];
+    save();
+    renderOps();
+    renderActiveOpPanel({preserveFocus:true});
+    return;
+  }
+  if(action==='active'){
+    setActiveOp(op.id,{expand:true});
+    renderOps();
+    renderActiveOpPanel();
+    focusOpTitle(op.id);
+    return;
+  }
+}
+
+// Stopwatch
+let raf=null; function tick(){ const t=state.running?(Date.now()-state.startTs+state.elapsed):state.elapsed; const ms=Math.floor(t%1000/100); const s=Math.floor(t/1000)%60; const m=Math.floor(t/60000); $('#chrono').textContent=`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}.${ms}`; raf=requestAnimationFrame(tick); }
+function start(){
+  if(state.running) return;
+  ensureEditablePlaceholder();
+  state.running=true;
+  state.startTs=Date.now();
+  state.lastLapTs=state.startTs;
+  tick();
+}
+function stop(){
+  if(!state.running) return;
+  const now=Date.now();
+  captureElapsedDuration(now,{reason:'stop'});
+  state.running=false;
+  state.elapsed+=now-state.startTs;
+  state.startTs=0;
+  state.lastLapTs=0;
+  cancelAnimationFrame(raf);
+  tick();
+}
+function reset(){ state.running=false; state.elapsed=0; state.startTs=0; state.lastLapTs=0; cancelAnimationFrame(raf); tick(); state.laps=[]; $('#lapsHint').textContent='Keine Runden erfasst.'; }
+function lap(){
+  if(!state.running){
+    $('#lapsHint').textContent='Stoppuhr läuft nicht.';
+    return;
+  }
+  const now=Date.now();
+  captureElapsedDuration(now,{reason:'lap'});
+  state.lastLapTs=now;
+}
+
+// Dashboard
+function recalcTotals(){ const totalStd=state.ops.reduce((a,o)=>a+calcOp(o).std,0); $('#sumStd').textContent=fmt(totalStd)+' s'; const takt=state.meta.taktMin*60; const util=takt?Math.min(999,(totalStd/takt)*100):0; $('#util').textContent=fmt(util)+' %'; $('#kpiStd')&&($('#kpiStd').textContent=fmt(totalStd)+' s'); $('#kpiOps')&&($('#kpiOps').textContent=fmt0(state.ops.length)); const lgAvg = state.ops.length? state.ops.reduce((a,o)=>a+(o.LG||state.settings.LG),0)/state.ops.length : state.settings.LG; $('#kpiLG')&&($('#kpiLG').textContent=fmt(lgAvg)+' %'); $('#kpiExcl')&&($('#kpiExcl').textContent=fmt(0)+' s'); drawBar($('#chartZeitart'), groupByZeitartStd()); drawPie($('#chartVA'), groupVA()); }
+function groupByZeitartStd(){ const acc={'Hauptzeit (VA)':0,'Rüstzeit':0,'Nebentätigkeit (NVA)':0,'Störung/Warten (NNVA)':0}; state.ops.forEach(o=>{ const {times}=calcOp(o); const LG=(o.LG??state.settings.LG)/100; const P=(o.allow?.P??state.settings.allow.P)/100; const E=(o.allow?.E??state.settings.allow.E)/100; const S=(o.allow?.S??state.settings.allow.S)/100; const factor=LG*(1+P+E+S); const opZeitart=(o.defaultZeitart||'').trim(); times.forEach(x=>{ const effectiveArt=opZeitart||x.art||''; if(!effectiveArt || !(effectiveArt in acc)) return; acc[effectiveArt]+= (x.t||0)/Math.max(1,o.cycles||1) * factor; }); }); return acc; }
+function groupVA(){ const g={VA:0,NVA:0,NNVA:0}; const cat=groupByZeitartStd(); g.VA+=cat['Hauptzeit (VA)']; g.NVA+=cat['Rüstzeit']+cat['Nebentätigkeit (NVA)']; g.NNVA+=cat['Störung/Warten (NNVA)']; return g; }
+function drawBar(canvas,data){ if(!canvas) return; const ctx=canvas.getContext('2d'); const w=canvas.width,h=canvas.height; ctx.clearRect(0,0,w,h); ctx.strokeStyle='#e5e7eb'; ctx.strokeRect(0,0,w,h); const keys=Object.keys(data); const vals=keys.map(k=>data[k]); const max=Math.max(1,...vals); const pad=32; const bw=(w-pad*2)/Math.max(1,keys.length); ctx.fillStyle='#334155'; ctx.font='12px system-ui'; keys.forEach((k,i)=>{ const v=vals[i]; const bh=(h-pad*2)*(v/max); const x=pad+i*bw; const y=h-pad-bh; ctx.fillStyle='#2563eb'; ctx.fillRect(x+8,y,bw-16,bh); ctx.fillStyle='#334155'; ctx.fillText(k, x+8, h-12); ctx.fillText(fmt(v), x+8, y-6); }); }
+function drawPie(canvas,data){ if(!canvas) return; const ctx=canvas.getContext('2d'); const w=canvas.width,h=canvas.height; ctx.clearRect(0,0,w,h); ctx.strokeStyle='#e5e7eb'; ctx.strokeRect(0,0,w,h); const entries=Object.entries(data); const sum=entries.reduce((a,[,v])=>a+v,0)||1; let start=-Math.PI/2; const cx=w/2,cy=h/2,r=Math.min(w,h)/2-20; const colors=['#16a34a','#f59e0b','#ef4444']; entries.forEach(([k,v],i)=>{ const ang=(v/sum)*Math.PI*2; ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,r,start,start+ang); ctx.closePath(); ctx.fillStyle=colors[i%3]; ctx.fill(); start+=ang; }); ctx.fillStyle='#334155'; ctx.font='12px system-ui'; let ly=16; entries.forEach(([k,v],i)=>{ ctx.fillStyle=['#16a34a','#f59e0b','#ef4444'][i%3]; ctx.fillRect(10,ly-10,10,10); ctx.fillStyle='#334155'; ctx.fillText(`${k}: ${fmt(v)} s`, 26, ly); ly+=16; }); }
+
+// Snippets UI
+function renderSnippets(){ const list=$('#snippetList'); if(!list) return; updateSnippetAvailability(); list.innerHTML=''; if(!state.snippetsEnabled){ return; } const q=($('#snippetSearch').value||'').toLowerCase(); const cat=$('#snippetCat').value||''; state.snippets.filter(s=>!cat||s.cat===cat).filter(s=>!q||s.text.toLowerCase().includes(q)).forEach(s=>{ const div=document.createElement('div'); div.className='card'; div.style.margin='6px 0'; div.innerHTML=`<div class="row" style="justify-content:space-between;align-items:center"><div><div class="hint">${s.cat}</div><div>${s.text}</div></div><div class="row"><button class="btn" data-action="useSnippet" data-text="${encodeURIComponent(s.text)}" data-cat="${s.cat}">Einfügen</button><button class="btn" data-action="delSnippet" data-text="${encodeURIComponent(s.text)}">Entfernen</button></div></div>`; list.appendChild(div); }); }
+
+// IO
+function exportJSON(){ const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`REFA_Studie_${(state.meta.project||'projekt').replace(/\s+/g,'_')}.json`; a.click(); }
+function exportCSV(){ const headers=['Projekt','Arbeitsplatz','Beobachter','Datum','VorgangNr','Code','Beschreibung','Bereich','LG%','Zyklus','DefaultZeitart','IstzeitØ[s]','Normalzeit[s]','Standardzeit[s]','P%','E%','S%','Zeiten[s] (t|Art|Bereich|Notiz)','Bilder (Data URLs)']; const rows=[headers.join(';')]; state.ops.forEach((op,i)=>{ const c=calcOp(op); const times=asTimeObj(op.times||[]).map(x=>{ const scope=normalizeScope(x.scope); const scopeLabel=SCOPE_LABELS[scope]||scope; const note=String(x.note||'').replace(/\r?\n/g,' ').trim(); return `${x.t}|${x.art||''}|${scopeLabel}|${note}`; }).join(','); const images=(op.images||[]).join(' '); const kindLabel=SCOPE_LABELS[normalizeKind(op.kind)]||SCOPE_LABELS.main; rows.push([state.meta.project,state.meta.workplace,state.meta.observer,state.meta.date,i+1,op.code||'',op.title||'',kindLabel,op.LG,op.cycles||1,op.defaultZeitart||'',fmt(c.ist).replace('.',','),fmt(c.normal).replace('.',','),fmt(c.std).replace('.',','),op.allow.P,op.allow.E,op.allow.S,times,images].map(x=> typeof x==='string'? '"'+String(x).replaceAll('"','""')+'"': x).join(';'));}); const csv='\ufeff'+rows.join('\n'); const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`REFA_Studie_${(state.meta.project||'projekt').replace(/\s+/g,'_')}.csv`; a.click(); }
+function importJSON(file){ file.text().then(txt=>{ try{ Object.assign(state, JSON.parse(txt)); normalizeState(); if(state.activeOpId){ setActiveOp(state.activeOpId,{expand:true}); } else { setActiveOp('',{expand:false}); } save(); renderMeta(); renderOps(); renderActiveOpPanel(); renderSnippets(); recalcTotals(); }catch(err){ alert('Ungültige JSON-Datei'); } }); }
+
+// Events
+$('#metaProject').addEventListener('input',updateMeta); $('#metaWorkplace').addEventListener('input',updateMeta); $('#metaObserver').addEventListener('input',updateMeta); $('#metaDate').addEventListener('change',updateMeta); $('#taktMin').addEventListener('input',updateMeta);
+if(toggleActiveBtn){ toggleActiveBtn.addEventListener('click',()=>{ const current=state.showActiveSelect!==false; state.showActiveSelect=!current; applyActiveSelectVisibility(); save(); }); }
+$('#activeOp').addEventListener('change',e=>{ const selected=e.target.value||''; if(selected){ setActiveOp(selected,{expand:true}); } else { setActiveOp('',{expand:false}); } renderOps(); renderActiveOpPanel(); if(selected){ focusOpTitle(selected); } });
+$('#btnStart').addEventListener('click',start); $('#btnStop').addEventListener('click',stop); $('#btnReset').addEventListener('click',()=>{ if(confirm('Stoppuhr zurücksetzen?')) reset();}); $('#btnLap').addEventListener('click',lap);
+toggleSubOps&&toggleSubOps.addEventListener('change',()=>{
+  state.useSubOps=!!toggleSubOps.checked;
+  if(!state.useSubOps){
+    state.lapScope='main';
+    state.ops.forEach(op=>{
+      if(normalizeKind(op.kind)==='sub' && (!Array.isArray(op.times)||!op.times.length)){
+        op.kind='main';
+      }
+    });
+  }
+  save();
+  updateSubModeControls();
+  renderOps();
+  renderActiveOpPanel();
+  if(!state.useSubOps){
+    ensureEditablePlaceholder('main');
+  }
+});
+lapScopeSelect&&lapScopeSelect.addEventListener('change',()=>{ state.lapScope=lapScopeSelect.value==='sub'?'sub':'main'; if(!state.useSubOps){ state.lapScope='main'; } save(); updateSubModeControls(); });
+$('#btnNewOp').addEventListener('click',()=>addOp({title:'Neuer Hauptvorgang', kind:'main'})); const btnNewSubOp=$('#btnNewSubOp'); btnNewSubOp&&btnNewSubOp.addEventListener('click',()=>{ if(!state.useSubOps) return; addOp({title:'Neuer Untervorgang', kind:'sub'}); }); $('#btnFromSnippet').addEventListener('click',()=>{ if(!state.snippetsEnabled) return; const s=state.snippets[0]; if(s) addOp({title:s.text, cat:s.cat, kind:'main'}); }); $('#btnClearOps').addEventListener('click',clearAllOps); const btnCheckZeitarten=$('#btnCheckZeitarten'); if(btnCheckZeitarten){ btnCheckZeitarten.addEventListener('click',checkZeitarten); } $('#btnExpand').addEventListener('click',()=>{ state.ops.forEach(op=>{ op.collapsed=false; }); renderOps(); }); $('#btnCollapse').addEventListener('click',()=>{ state.ops.forEach(op=>{ op.collapsed=true; }); if(state.activeOpId){ const active=opById(state.activeOpId); if(active) active.collapsed=false; } renderOps(); });
+$('#btnHelp').addEventListener('click',()=>$('#dlgHelp').showModal()); $('#closeHelp').addEventListener('click',()=>$('#dlgHelp').close()); $('#btnKeys').addEventListener('click',()=>$('#dlgKeys').showModal()); $('#closeKeys').addEventListener('click',()=>$('#dlgKeys').close());
+$('#btnSave').addEventListener('click',exportJSON); $('#btnCSV').addEventListener('click',exportCSV); $('#btnPrint').addEventListener('click',()=>window.print()); $('#btnLoad').addEventListener('click',()=>$('#fileInput').click()); $('#fileInput').addEventListener('change',e=>{ const f=e.target.files[0]; if(f) importJSON(f); e.target.value=''; });
+$('#snippetSearch').addEventListener('input',renderSnippets); $('#snippetCat').addEventListener('change',renderSnippets); $('#btnAddSnippet').addEventListener('click',()=>{ if(!state.snippetsEnabled) return; const text=prompt('Textbaustein (Beschreibung)'); if(!text) return; const cat=prompt('Kategorie: Schweißen/Montieren/Qualität/Dokumentation')||'Montieren'; state.snippets.push({cat,text}); saveSnips(); renderSnippets();}); $('#btnResetSnippets').addEventListener('click',()=>{ if(confirm('Textbausteine zurücksetzen?')){ state.snippets=DEFAULT_SNIPPETS.slice(); saveSnips(); renderSnippets(); }});
+toggleSnippetsInput&&toggleSnippetsInput.addEventListener('change',()=>{ state.snippetsEnabled=!!toggleSnippetsInput.checked; save(); renderSnippets(); });
+showSnippetsBtn&&showSnippetsBtn.addEventListener('click',()=>{ state.snippetsEnabled=true; save(); updateSnippetAvailability(); renderSnippets(); });
+$('#snippetList').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; const action=b.dataset.action; const text=decodeURIComponent(b.dataset.text||''); const cat=b.dataset.cat||'Montieren'; if(action==='useSnippet'){ if(!state.snippetsEnabled) return; addOp({title:text, cat}); start(); } else if(action==='delSnippet'){ const i=state.snippets.findIndex(s=>s.text===text); if(i>-1){ state.snippets.splice(i,1); saveSnips(); renderSnippets(); } } });
+$('#ops').addEventListener('input',handleOpInput);
+$('#ops').addEventListener('change',handleOpChange);
+$('#ops').addEventListener('click',handleOpClick);
+const activePanel=$('#activeOpPanel');
+activePanel&&activePanel.addEventListener('input',handleOpInput);
+activePanel&&activePanel.addEventListener('change',handleOpChange);
+activePanel&&activePanel.addEventListener('click',handleOpClick);
+document.addEventListener('click',e=>{ const thumb=e.target.closest('.imgthumb'); if(!thumb) return; e.preventDefault(); showImagePreview(thumb.getAttribute('src')); });
+closeImgPreviewBtn&&closeImgPreviewBtn.addEventListener('click',()=>closeImagePreview());
+imgPreviewDialog&&imgPreviewDialog.addEventListener('click',e=>{ if(e.target===imgPreviewDialog) closeImagePreview(); });
+imgPreviewDialog&&imgPreviewDialog.addEventListener('cancel',e=>{ e.preventDefault(); closeImagePreview(); });
+
+// Keyboard
+window.addEventListener('keydown',e=>{
+  if(['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName)&&!['Escape'].includes(e.key)) return;
+  const k=e.key.toLowerCase();
+  if(k==='s'){ e.preventDefault(); state.running?stop():start(); }
+  if(k==='l'){ e.preventDefault(); lap(); }
+  if(k==='r'){ e.preventDefault(); reset(); }
+  if(k==='n'){ e.preventDefault(); addOp({title:'Neuer Hauptvorgang', kind:'main'}); }
+  if(e.shiftKey && k==='n'){ e.preventDefault(); const s=state.snippets[0]; if(s) addOp({title:s.text, cat:s.cat, kind:'main'}); }
+  if(e.shiftKey && k==='u'){ e.preventDefault(); if(state.useSubOps){ addOp({title:'Neuer Untervorgang', kind:'sub'}); } }
+  if(e.shiftKey && k==='t'){ e.preventDefault(); state.snippetsEnabled=!state.snippetsEnabled; save(); renderSnippets(); return; }
+  if(k==='f'){ e.preventDefault(); $('#snippetSearch').focus(); }
+  if(k==='k'){ e.preventDefault(); $('#snippetCat').focus(); }
+  if(k==='e'){ e.preventDefault(); exportJSON(); }
+  if(k==='c'){ e.preventDefault(); exportCSV(); }
+  if(k==='i'){ e.preventDefault(); $('#fileInput').click(); }
+  if(k==='p'){ e.preventDefault(); window.print(); }
+});
+
+// Init
+function init(){ renderMeta(); updateSubModeControls(); renderOps(); renderActiveOpPanel(); renderSnippets(); updateHeaderOffset(); if(typeof ResizeObserver!=='undefined' && !headerObserver){ const header=document.querySelector('header'); if(header){ headerObserver=new ResizeObserver(()=>updateHeaderOffset()); headerObserver.observe(header); } } reset(); }
+init();
+</script>
+</body>
+</html>
